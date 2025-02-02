@@ -3,7 +3,7 @@ import { Tabs } from "expo-router";
 import { FontAwesome, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import { StyleSheet, View } from "react-native";
-import HomeHeader from "../components/HomeHeader";
+import CustomHeader from "../components/CustomHeader";
 
 
 
@@ -22,33 +22,36 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+          tabBarStyle: { backgroundColor: "#1e3504" }, // background color of the tab bar
         }}
+        
       >
         {/* home tab */}
         <Tabs.Screen
           name="index" // corresponds to /(tabs)/index.tsx
           options={{
-            title: "Home",
             tabBarIcon: ({ color }) => (
-              <FontAwesome size={28} name="home" color={color} />
+              <FontAwesome size={26} name="home" color={color} />
             ),
             header: () => (
-              <HomeHeader // custom header for home tab
-                selectedDate={selectedDate}
-                setSelectedDate={setSelectedDate}
-              />
+              <CustomHeader title = "Home"/> // custom colored header
             ), 
+            tabBarLabel: () => null, // Hide the label
           }}
         />
 
-        {/* explore tab */}
+        {/* mobile control tab */}
         <Tabs.Screen
           name="explore" // corresponds to /(tabs)/explore.tsx
           options={{
-            title: "Explore",
             tabBarIcon: ({ color }) => (
-              <Ionicons size={28} name="grid" color={color} />
+              <Ionicons size={24} name="grid" color={color} />
             ),
+            header: () => (
+              <CustomHeader title = "Mobile Control"/> // custom colored header
+            ), 
+            tabBarLabel: () => null, // Hide the label
+
           }}
         />
 
@@ -56,10 +59,11 @@ export default function TabLayout() {
         <Tabs.Screen
           name="chat" // corresponds to /(tabs)/chat.tsx
           options={{
-            title: "Chat",
+            title: "Stationary Control",
             tabBarIcon: ({ color }) => (
-              <Ionicons size={28} name="chatbubble" color={color} />
+              <Ionicons size={24} name="chatbubble" color={color} />
             ),
+            tabBarLabel: () => null, // Hide the label
           }}
         />
 
@@ -69,8 +73,9 @@ export default function TabLayout() {
           options={{
             title: "Settings",
             tabBarIcon: ({ color }) => (
-              <FontAwesome6 size={28} name="user-gear" color={color} />
+              <FontAwesome6 size={24} name="user-gear" color={color} />
             ),
+            tabBarLabel: () => null, // Hide the label
           }}
         />
       </Tabs>
