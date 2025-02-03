@@ -45,7 +45,7 @@ const notifications = [
   },
 ];
 
-export default function TabHomeScreen(): JSX.Element {
+export default function TabMobileScreen(): JSX.Element {
   const renderLogItem = ({ item }: { item: any }) => (
     <View style={styles.logItem}>
       <Text style={styles.logType}>{item.type}</Text>
