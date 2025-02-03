@@ -41,11 +41,11 @@ export default function TabLayout() {
 
         {/* mobile control tab */}
         <Tabs.Screen
-          name="explore" // corresponds to /(tabs)/explore.tsx
+          name="mobile" // corresponds to /(tabs)/mobile.tsx
           options={{
             title: "Mobile",
             tabBarIcon: ({ color }) => (
-              <Ionicons size={24} name="grid" color={color} />
+              <Ionicons size={26} name="grid" color={color} />
             ),
             header: () => (
               <CustomHeader title = "Mobile Control"/> // custom colored header
@@ -55,11 +55,11 @@ export default function TabLayout() {
 
         {/* chat tab */}
         <Tabs.Screen
-          name="chat" // corresponds to /(tabs)/chat.tsx
+          name="stationary" // corresponds to /(tabs)/stationary.tsx
           options={{
             title: "Stationary ",
             tabBarIcon: ({ color }) => (
-              <Ionicons size={24} name="chatbubble" color={color} />
+              <Ionicons size={26} name="chatbubble" color={color} />
             ),
             header: () => (
               <CustomHeader title = "Stationary Control"/> // custom colored header
@@ -73,7 +73,7 @@ export default function TabLayout() {
           options={{
             title: "Settings",
             tabBarIcon: ({ color }) => (
-              <FontAwesome6 size={24} name="user-gear" color={color} />
+              <FontAwesome6 size={26} name="user-gear" color={color} />
             ),
             header: () => (
               <CustomHeader title = "Settings"/> // custom colored header
