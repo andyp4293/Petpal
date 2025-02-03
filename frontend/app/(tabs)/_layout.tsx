@@ -24,19 +24,18 @@ export default function TabLayout() {
           tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
           tabBarStyle: { backgroundColor: "#1e3504" }, // background color of the tab bar
         }}
-        
       >
         {/* home tab */}
         <Tabs.Screen
           name="index" // corresponds to /(tabs)/index.tsx
           options={{
+            title: "Home",
             tabBarIcon: ({ color }) => (
               <FontAwesome size={26} name="home" color={color} />
             ),
             header: () => (
               <CustomHeader title = "Home"/> // custom colored header
             ), 
-            tabBarLabel: () => null, // Hide the label
           }}
         />
 
@@ -44,14 +43,13 @@ export default function TabLayout() {
         <Tabs.Screen
           name="explore" // corresponds to /(tabs)/explore.tsx
           options={{
+            title: "Mobile",
             tabBarIcon: ({ color }) => (
               <Ionicons size={24} name="grid" color={color} />
             ),
             header: () => (
               <CustomHeader title = "Mobile Control"/> // custom colored header
             ), 
-            tabBarLabel: () => null, // Hide the label
-
           }}
         />
 
@@ -59,11 +57,13 @@ export default function TabLayout() {
         <Tabs.Screen
           name="chat" // corresponds to /(tabs)/chat.tsx
           options={{
-            title: "Stationary Control",
+            title: "Stationary ",
             tabBarIcon: ({ color }) => (
               <Ionicons size={24} name="chatbubble" color={color} />
             ),
-            tabBarLabel: () => null, // Hide the label
+            header: () => (
+              <CustomHeader title = "Stationary Control"/> // custom colored header
+            ), 
           }}
         />
 
@@ -75,7 +75,9 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => (
               <FontAwesome6 size={24} name="user-gear" color={color} />
             ),
-            tabBarLabel: () => null, // Hide the label
+            header: () => (
+              <CustomHeader title = "Settings"/> // custom colored header
+            ), 
           }}
         />
       </Tabs>
