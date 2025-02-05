@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Feather } from "@expo/vector-icons"; 
+import LiveCameraFeed from "../components/LiveCameraFeed";
 
 
 // mock data for pet status
@@ -15,7 +16,7 @@ const petStatus = {
   potty: "55%", // logging potty capacity
   food: "20%", // logging food level
   water: "90%", // logging water levels
-  timeLastPlay: "1 hour ago", // logs the time since pet got activity
+  timeLastPlay: "3 hour ago", // logs the time since pet got activity
 };
 
 // Recent logs data
@@ -77,6 +78,10 @@ export default function TabHomeScreen(): JSX.Element {
           <Text style={styles.timeValue}>{petStatus.timeLastPlay}</Text>
           <Text style={styles.timeLabel}>Time since last activity</Text>
         </View>
+      </View>
+      <Text style={styles.sectionTitle}>Live Camera Feed</Text>
+      <View style={styles.statusGrid}>
+        <LiveCameraFeed />
       </View>
 
       {/* Recent Logs */}
