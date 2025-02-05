@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons"; 
 
-const { width } = Dimensions.get("window");
 
 // mock data for pet status
 const petStatus = {
