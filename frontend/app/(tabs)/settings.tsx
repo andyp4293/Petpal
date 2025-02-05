@@ -4,11 +4,9 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  Dimensions,
   ScrollView,
 } from "react-native";
 
-const { width } = Dimensions.get("window");
 
 // mock data for pet status
 const petStatus = {
