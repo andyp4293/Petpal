@@ -7,8 +7,7 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
-import { Feather } from "@expo/vector-icons"; 
-import LiveCameraFeed from "../components/LiveCameraFeed";
+import { FontAwesome5 } from "@expo/vector-icons"; 
 
 
 // mock data for pet status
@@ -33,7 +32,7 @@ const notifications = [
 
 type LogItemProps = { id: string; type: string; details?: string; message?: string };
 
-// Reusable list item for logs & notifications
+// reusable list item for logs & notifications
 const ListItem = ({ type, details, message }: LogItemProps) => (
   <View style={styles.listItem}>
     <Text style={styles.itemType}>{type}</Text>
@@ -41,25 +40,28 @@ const ListItem = ({ type, details, message }: LogItemProps) => (
   </View>
 );
 
-// Status Card Component
 type StatusCardProps = {
   title: string;
-  value: string;
+  value: number | string;
   icon: string;
 };
 
-const StatusCard = ({ title, value, icon }: StatusCardProps) => (
-  <View style={styles.card}>
-    <View style={styles.cardHeader}>
-      <Text style={styles.cardTitle}>{title}</Text>
-      <Feather name={icon} size={18} color="#1e3504" />
+const StatusCard = ({ title, value, icon }: StatusCardProps) => {
+  const progressBarWidth = typeof value === 'number' ? value : parseFloat(value);
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <FontAwesome5 name={icon} size={18} color="#1e3504" />
+      </View>
+      <View style={styles.progressBarContainer}>
+        <View style={[styles.progressBar, { width: progressBarWidth }]} />
+      </View>
+      <Text style={styles.cardValue}>{typeof value === 'string' ? value : `${value}px`}</Text>
     </View>
-    <View style={styles.progressBarContainer}>
-      <View style={[styles.progressBar, { width: value }]} />
-    </View>
-    <Text style={styles.cardValue}>{value}</Text>
-  </View>
-);
+  );
+};
 
 export default function TabHomeScreen(): JSX.Element {
   return (
@@ -67,21 +69,17 @@ export default function TabHomeScreen(): JSX.Element {
       {/* Pet Status Overview */}
       <Text style={styles.sectionTitle}>Pet Status</Text>
       <View style={styles.statusGrid}>
-        <StatusCard title="Potty Capacity" value={petStatus.potty} icon="target" />
-        <StatusCard title="Water Level" value={petStatus.water} icon="droplet" />
-        <StatusCard title="Food Level" value={petStatus.food} icon="coffee" />
+        <StatusCard title="Potty Capacity" value={petStatus.potty} icon="toilet" />
+        <StatusCard title="Water Level" value={petStatus.water} icon="tint" />
+        <StatusCard title="Food Level" value={petStatus.food} icon="pizza-slice" />
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Last Exercise</Text>
-            <Feather name="clock" size={18} color="#1e3504" />
+            <FontAwesome5 name="dumbbell" size={18} color="#1e3504" />
           </View>
           <Text style={styles.timeValue}>{petStatus.timeLastPlay}</Text>
           <Text style={styles.timeLabel}>Time since last activity</Text>
         </View>
-      </View>
-      <Text style={styles.sectionTitle}>Live Camera Feed</Text>
-      <View style={styles.statusGrid}>
-        <LiveCameraFeed />
       </View>
 
       {/* Recent Logs */}
