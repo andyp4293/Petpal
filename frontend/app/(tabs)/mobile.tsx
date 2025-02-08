@@ -7,7 +7,7 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
-import { Feather, FontAwesome5 } from "@expo/vector-icons"; 
+import { FontAwesome5 } from "@expo/vector-icons"; 
 import LiveCameraFeed from "../components/LiveCameraFeed";
 
 
@@ -70,13 +70,13 @@ export default function TabMobileScreen(): JSX.Element {
       {/* Pet Status Overview */}
       <Text style={styles.sectionTitle}>Pet Status</Text>
       <View style={styles.statusGrid}>
-        <StatusCard title="Potty Capacity" value={petStatus.potty} icon="target" />
-        <StatusCard title="Water Level" value={petStatus.water} icon="droplet" />
-        <StatusCard title="Food Level" value={petStatus.food} icon="coffee" />
+        <StatusCard title="Potty Capacity" value={petStatus.potty} icon="toilet" />
+        <StatusCard title="Water Level" value={petStatus.water} icon="tint" />
+        <StatusCard title="Food Level" value={petStatus.food} icon="pizza-slice" />
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Last Exercise</Text>
-            <Feather name="clock" size={18} color="#1e3504" />
+            <FontAwesome5 name="dumbbell" size={18} color="#1e3504" />
           </View>
           <Text style={styles.timeValue}>{petStatus.timeLastPlay}</Text>
           <Text style={styles.timeLabel}>Time since last activity</Text>
