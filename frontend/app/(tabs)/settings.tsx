@@ -36,6 +36,7 @@ export default function TabSettingsScreen(): JSX.Element {
   const [ownerName, setOwnerName] = useState<string>("");
   const [petName, setPetName] = useState<string>("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const defaulImage = "../../assets/images/default1.png"; // default profile image
 
   const pickImage = async () => {
     // this asks for permission for the app to open the users' photo library
@@ -60,20 +61,24 @@ export default function TabSettingsScreen(): JSX.Element {
 
   return (
     <ScrollView style={styles.container}>
+      <View style = {styles.card}>
       {/* profile picture section */}
       <View style={styles.profileContainer}>
         <TouchableOpacity onPress={pickImage}>
           <Image
-            source={profileImage ? { uri: profileImage } : require("../../assets/images/default.png")}
+            source={profileImage ? { uri: profileImage } : require(defaulImage)}
             style={styles.profileImage}
           />
         </TouchableOpacity>
-        <Text style={styles.profileText}>Tap to change profile picture</Text>
+        <Text style={styles.profileText}>Edit picture or avatar</Text>
       </View>
+      
 
       {/* account details editing*/}
       <SettingInput label="Your Name" value={ownerName} onChange={setOwnerName} />
       <SettingInput label="Pet's Name" value={petName} onChange={setPetName} />
+      <SettingInput label="Your Email" value={petName} onChange={setPetName} />
+      </View>
     </ScrollView>
   );
 }
@@ -83,6 +88,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#ede8d0",
     padding: 16,
+  },
+  card: {
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 10,
+    width: "100%",
   },
   profileContainer: {
     alignItems: "center",
@@ -98,15 +111,16 @@ const styles = StyleSheet.create({
   profileText: {
     marginTop: 8,
     fontSize: 14,
-    color: "#555",
+    color: "#1e3504",
   },
   inputContainer: {
     marginBottom: 20,
+    width: "100%",
   },
   label: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#555",
+    color: "#1e3504",
     marginBottom: 5,
   },
   input: {
@@ -117,5 +131,6 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     fontSize: 16,
     color: "#333",
+    width: "100%",
   },
 });
