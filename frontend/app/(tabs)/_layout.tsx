@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Tabs } from "expo-router";
-import { FontAwesome, FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { FontAwesome, FontAwesome6, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import { StyleSheet, View } from "react-native";
 import CustomHeader from "../components/CustomHeader";
@@ -45,7 +45,7 @@ export default function TabLayout() {
           options={{
             title: "Mobile",
             tabBarIcon: ({ color }) => (
-              <Ionicons size={26} name="grid" color={color} />
+              <MaterialCommunityIcons name="router-wireless" size={26} color={color} />
             ),
             header: () => (
               <CustomHeader title = "Mobile Control"/> // custom colored header
@@ -59,7 +59,7 @@ export default function TabLayout() {
           options={{
             title: "Stationary ",
             tabBarIcon: ({ color }) => (
-              <Ionicons size={26} name="chatbubble" color={color} />
+              <FontAwesome5 size={19} name="broadcast-tower" color={color} />
             ),
             header: () => (
               <CustomHeader title = "Stationary Control"/> // custom colored header
@@ -73,7 +73,7 @@ export default function TabLayout() {
           options={{
             title: "Settings",
             tabBarIcon: ({ color }) => (
-              <FontAwesome6 size={26} name="user-gear" color={color} />
+              <FontAwesome6 size={26} name="gear" color={color} />
             ),
             header: () => (
               <CustomHeader title = "Settings"/> // custom colored header

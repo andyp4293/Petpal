@@ -1,108 +1,79 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
-  FlatList,
+  TextInput,
   StyleSheet,
   ScrollView,
+  Image,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 
-
-// mock data for pet status
-const petStatus = {
-  potty: "55%", // logging potty capacity
-  food: "20%", // logging food level 
-  water: "90%", // logging water levels
-  timeLastPlay: "1 hour ago", // logs the time since pet got activity
-};
-
-const recentLogs = [
-  {
-    id: "1",
-    type: "Feeding",
-    details: "12:30 PM - 1 cup of kibble",
-  },
-  {
-    id: "2",
-    type: "Exercise",
-    details: "10:00 AM - 20 mins",
-  },
-  
-];
-
-const notifications = [
-  {
-    id: "1",
-    type: "Potty",
-    message: "11:24 AM - Pet used potty",
-  },
-  {
-    id: "3",
-    type: "Connectivity",
-    message: "Device offline - check connection",
-  },
-];
+const SettingInput = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (text: string) => void;
+}) => (
+  <View style={styles.inputContainer}>
+    <Text style={styles.label}>{label}</Text>
+    <TextInput
+      style={styles.input}
+      value={value}
+      onChangeText={onChange}
+      placeholder={`Enter ${label.toLowerCase()}`}
+      placeholderTextColor="#888"
+    />
+  </View>
+);
 
 export default function TabSettingsScreen(): JSX.Element {
-  const renderLogItem = ({ item }: { item: any }) => (
-    <View style={styles.logItem}>
-      <Text style={styles.logType}>{item.type}</Text>
-      <Text style={styles.logDetails}>{item.details}</Text>
-    </View>
-  );
+  const [ownerName, setOwnerName] = useState<string>("");
+  const [petName, setPetName] = useState<string>("");
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  const renderNotificationItem = ({ item }: { item: any }) => (
-    <View style={styles.notificationItem}>
-      <Text style={styles.notificationType}>{item.type}</Text>
-      <Text style={styles.notificationMessage}>{item.message}</Text>
-    </View>
-  );
+  const pickImage = async () => {
+    // this asks for permission for the app to open the users' photo library
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "Please allow access to your photos to upload a profile picture.");
+      return;
+    }
+
+    // launch image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1], // crop image square
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setProfileImage(result.assets[0].uri);
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
-      {/* Pet Status Overview */}
-      <View style={styles.statusContainer}>
-        <Text style={styles.sectionTitle}>Pet Status</Text>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Potty Capacity:</Text>
-          <Text style={styles.statusValue}>{petStatus.potty}</Text>
-        </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Water Level:</Text>
-          <Text style={styles.statusValue}>{petStatus.water}</Text>
-        </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Food:</Text>
-          <Text style={styles.statusValue}>{petStatus.food}</Text>
-        </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Time Since Last Exercise:</Text>
-          <Text style={styles.statusValue}>{petStatus.timeLastPlay}</Text>
-        </View>
+      {/* profile picture section */}
+      <View style={styles.profileContainer}>
+        <TouchableOpacity onPress={pickImage}>
+          <Image
+            source={profileImage ? { uri: profileImage } : require("../../assets/images/default.png")}
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
+        <Text style={styles.profileText}>Tap to change profile picture</Text>
       </View>
 
-      {/* Recent Logs */}
-      <View style={styles.logsContainer}>
-        <Text style={styles.sectionTitle}>Recent Updates</Text>
-        <FlatList
-          data={recentLogs}
-          renderItem={renderLogItem}
-          keyExtractor={(item) => item.id}
-          scrollEnabled={false}
-        />
-      </View>
-
-
-      {/* Notifications */}
-      <View style={styles.notificationsContainer}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
-        <FlatList
-          data={notifications}
-          renderItem={renderNotificationItem}
-          keyExtractor={(item) => item.id}
-          scrollEnabled={false}
-        />
-      </View>
+      {/* account details editing*/}
+      <SettingInput label="Your Name" value={ownerName} onChange={setOwnerName} />
+      <SettingInput label="Pet's Name" value={petName} onChange={setPetName} />
     </ScrollView>
   );
 }
@@ -113,75 +84,38 @@ const styles = StyleSheet.create({
     backgroundColor: "#ede8d0",
     padding: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#1e3504",
-  },
-  statusContainer: {
-    marginBottom: 20,
-  },
-  statusRow: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  statusLabel: {
-    fontWeight: "bold",
-    marginRight: 8,
-    color: "#555",
-  },
-  statusValue: {
-    color: "#333",
-  },
-  logsContainer: {
-    marginBottom: 20,
-  },
-  logItem: {
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 8,
-  },
-  logType: {
-    fontWeight: "bold",
-    color: "#333",
-  },
-  logDetails: {
-    color: "#555",
-  },
-  quickAccessContainer: {
-    marginBottom: 20,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  button: {
-    backgroundColor: "#007bff",
-    padding: 15,
-    borderRadius: 5,
-    width: "48%",
+  profileContainer: {
     alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  notificationsContainer: {
     marginBottom: 20,
   },
-  notificationItem: {
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 8,
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: "#1e3504",
   },
-  notificationType: {
-    fontWeight: "bold",
-    color: "#333",
-  },
-  notificationMessage: {
+  profileText: {
+    marginTop: 8,
+    fontSize: 14,
     color: "#555",
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#555",
+    marginBottom: 5,
+  },
+  input: {
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    fontSize: 16,
+    color: "#333",
   },
 });
