@@ -10,47 +10,44 @@ import {
   Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
-const SettingInput = ({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (text: string) => void;
-}) => (
-  <View style={styles.inputContainer}>
-    <Text style={styles.label}>{label}</Text>
-    <TextInput
-      style={styles.input}
-      value={value}
-      onChangeText={onChange}
-      placeholder={`Enter ${label.toLowerCase()}`}
-      placeholderTextColor="#888"
-    />
-  </View>
-);
+
+const SettingItem = ({ label, value, route }: { label: string; value: string; route: string }) => {
+  const router = useRouter();
+
+  return (
+    <TouchableOpacity
+      style={styles.settingItem}
+      onPress={() => router.push(`/tabs/settings/${route}` as const)} 
+    >
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.valueContainer}>
+        <Text style={styles.valueText}>{value || "Set value"}</Text>
+        <Ionicons name="chevron-forward" size={20} color="#555" />
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 export default function TabSettingsScreen(): JSX.Element {
   const [ownerName, setOwnerName] = useState<string>("");
   const [petName, setPetName] = useState<string>("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const defaulImage = "../../assets/images/default1.png"; // default profile image
+  const defaultImage = require("../../assets/images/default1.png"); // default profile image
 
   const pickImage = async () => {
-    // this asks for permission for the app to open the users' photo library
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert("Permission Denied", "Please allow access to your photos to upload a profile picture.");
       return;
     }
 
-    // launch image picker
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [1, 1], // crop image square
+      aspect: [1, 1],
       quality: 1,
     });
 
@@ -61,23 +58,22 @@ export default function TabSettingsScreen(): JSX.Element {
 
   return (
     <ScrollView style={styles.container}>
-      <View style = {styles.card}>
-      {/* profile picture section */}
-      <View style={styles.profileContainer}>
-        <TouchableOpacity onPress={pickImage}>
-          <Image
-            source={profileImage ? { uri: profileImage } : require(defaulImage)}
-            style={styles.profileImage}
-          />
-        </TouchableOpacity>
-        <Text style={styles.profileText}>Edit picture or avatar</Text>
-      </View>
-      
+      <View style={styles.card}>
+        {/* profile picture section */}
+        <View style={styles.profileContainer}>
+          <TouchableOpacity onPress={pickImage}>
+            <Image
+              source={profileImage ? { uri: profileImage } : defaultImage}
+              style={styles.profileImage}
+            />
+          </TouchableOpacity>
+          <Text style={styles.profileText}>Edit picture or avatar</Text>
+        </View>
 
-      {/* account details editing*/}
-      <SettingInput label="Your Name" value={ownerName} onChange={setOwnerName} />
-      <SettingInput label="Pet's Name" value={petName} onChange={setPetName} />
-      <SettingInput label="Your Email" value={petName} onChange={setPetName} />
+        {/* account details editing */}
+        <SettingItem label="Your Name" value="John Doe" route="name" />
+        <SettingItem label="Pet's Name" value="Buddy" route="pet-name" />
+        <SettingItem label="Email" value="john@example.com" route="email" />
       </View>
     </ScrollView>
   );
@@ -113,24 +109,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#1e3504",
   },
-  inputContainer: {
-    marginBottom: 20,
+  valueContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  valueText: {
+    fontSize: 16,
+    color: "#555",
+    marginRight: 8,
+  },
+  settingItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
     width: "100%",
   },
   label: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#1e3504",
-    marginBottom: 5,
-  },
-  input: {
-    backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    fontSize: 16,
-    color: "#333",
-    width: "100%",
   },
 });
