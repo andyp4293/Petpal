@@ -1,43 +1,31 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
-
-const screenHeight = Dimensions.get('window').height;
 
 interface LiveCameraFeedProps {
   uri?: string;
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  webview: {
-    flex: 1,
-    width: '100%',
-    height: screenHeight / (100 / 35), // Takes 35% of screen height
-  },
-  blankScreen: {
-    width: '100%',
-    height: screenHeight / (100 / 35),
-    backgroundColor: 'black',
-  }
+  container: { flex: 1 },
+  webview: { flex: 1, width: '100%', height: 300 },
 });
 
 export default function LiveCameraFeed({ uri }: LiveCameraFeedProps) {
   return (
     <View style={styles.container}>
-      {uri ? (
-        <WebView
-          source={{ uri }}
-          style={styles.webview}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          allowsInlineMediaPlayback={true}
-        />
-      ) : (
-        <View style={styles.blankScreen} />
-      )}
+      <WebView
+        source={{ uri: uri || "http://192.168.4.1:81/stream" }}
+        style={styles.webview}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        allowsInlineMediaPlayback={true}
+        mediaPlaybackRequiresUserAction={false}
+        onError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          console.error("WebView Error:", nativeEvent);
+        }}
+      />
     </View>
   );
 }
