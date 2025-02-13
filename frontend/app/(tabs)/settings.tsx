@@ -20,7 +20,7 @@ const SettingItem = ({ label, value, route }: { label: string; value: string; ro
   return (
     <TouchableOpacity
       style={styles.settingItem}
-      onPress={() => router.push(`/tabs/settings/${route}` as const)} 
+      onPress={() => router.push(`/settings/${route}` as const)} 
     >
       <Text style={styles.label}>{label}</Text>
       <View style={styles.valueContainer}>
