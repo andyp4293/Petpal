@@ -1,6 +1,12 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
+
+const screenHeight = Dimensions.get('window').height;
+
+interface LiveCameraFeedProps {
+    uri?: string;
+}
 
 const styles = StyleSheet.create({
     container: {
@@ -8,13 +14,29 @@ const styles = StyleSheet.create({
     },
     webview: {
         flex: 1,
+    },
+    blankScreen: {
+        display: 'flex',
+        width: '100%',
+        height: screenHeight / (100 / 35),
+        backgroundColor: 'black',
     }
 });
 
-export default function LiveCameraFeed(){
+export default function LiveCameraFeed({uri}: LiveCameraFeedProps){
+    
     return (
         <View style={styles.container}>
-            <WebView source={{uri: ''}} style={styles.webview}/>
+            {uri ? (
+                //<WebView source={{uri: ''}} style={styles.webview}/>
+                <Text>Your URI is this: {uri}</Text>
+            )
+            :
+            (
+                <View style={styles.blankScreen}/>
+
+            )
+        }
         </View>
     )
 }

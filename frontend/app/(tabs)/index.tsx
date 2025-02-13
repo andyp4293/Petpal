@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons"; 
 
-
 // mock data for pet status
 const petStatus = {
   potty: "55%", // logging potty capacity

@@ -84,7 +84,7 @@ export default function TabMobileScreen(): JSX.Element {
       </View>
       <Text style={styles.sectionTitle}>Live Camera Feed</Text>
       <View style={styles.statusGrid}>
-        <LiveCameraFeed />
+        <LiveCameraFeed uri="Hello Andy Pham"/>
       </View>
 
       {/* Recent Logs */}
