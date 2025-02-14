@@ -71,7 +71,7 @@ export default function TabSettingsScreen(): JSX.Element {
         </View>
 
         {/* account details editing */}
-        <SettingItem label="Your Name" value="John Doe" route="name" />
+        <SettingItem label="Your Name" value={ownerName} route="name" />
         <SettingItem label="Pet's Name" value="Buddy" route="pet-name" />
         <SettingItem label="Email" value="john@example.com" route="email" />
       </View>

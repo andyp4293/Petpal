@@ -7,8 +7,7 @@ import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function SettingsDetailScreen() {
-  const { route } = useLocalSearchParams(); // Get the setting type from the URL
-  const [value, setValue] = useState("");
+  const [ownersName, setOwnersValue] = useState("");
   const navigation = useNavigation();
 
   // Dynamically set the header title
@@ -34,8 +33,8 @@ export default function SettingsDetailScreen() {
         style={styles.input}
         placeholder={`Enter New Owner's Name`}
         placeholderTextColor="#5f5f5f"
-        value={value}
-        onChangeText={setValue}
+        value={ownersName}
+        onChangeText={setOwnersValue}
       />
     </View>
   );
