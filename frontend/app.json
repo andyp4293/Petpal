@@ -14,13 +14,15 @@
     },
     "ios": {
       "supportsTablet": true,
-      "newArchEnabled": true
+      "newArchEnabled": true,
+      "bundleIdentifier": "app.petpal.frontend"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "app.petpal.frontend"
     },
     "web": {
       "bundler": "metro",

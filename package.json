@@ -6,6 +6,7 @@
     "@react-native-firebase/firestore": "^21.10.0",
     "@react-native-firebase/storage": "^21.10.0",
     "expo": "^52.0.35",
+    "expo-dev-client": "^5.0.12",
     "firebase": "^11.3.1"
   }
 }

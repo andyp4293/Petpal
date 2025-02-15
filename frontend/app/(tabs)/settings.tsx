@@ -12,11 +12,14 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { db } from "../../constants/firebase/firebaseconfig"; // Import Firestore instance
+import { ref, get } from "firebase/database"; // Add this
+import { db } from "../../constants/firebase/firebaseconfig";
+
 
 
 const SettingItem = ({ label, value, route }: { label: string; value: string; route: string }) => {
   const router = useRouter();
+  console.log(process.env.EXPO_PUBLIC_FIREBASE_API_KEY)
 
   return (
     <TouchableOpacity
@@ -59,34 +62,26 @@ export default function TabSettingsScreen(): JSX.Element {
 
   // load data from Firestore when the component mounts
   useEffect(() => {
+    console.log("🔥 Firebase DB instance:", db); // Log database instance
+  
     const fetchData = async () => {
-      const userDoc = await db.collection("users").doc("default").get();
-      if (userDoc.exists) {
-        const data = userDoc.data();
-        setOwnerName(data?.ownerName || "");
-        setPetName(data?.petName || "");
+      try {
+        const snapshot = await get(ref(db, "users/default"));
+        if (snapshot.exists()) {
+          console.log("✅ Data fetched:", snapshot.val());
+        } else {
+          console.log("❌ No data found in Firebase.");
+        }
+      } catch (error) {
+        console.error("❌ Error fetching data:", error);
       }
     };
+  
     fetchData();
   }, []);
-
-  // save changing data to Firestore
-  const saveToFirestore = async () => {
-    try {
-      await db.collection("users").doc("default").set(
-        {
-          ownerName,
-          petName,
-        },
-        { merge: true }
-      );
-      Alert.alert("Success", "Your details have been saved!");
-    } catch (error) {
-      console.error("Error saving data: ", error);
-      Alert.alert("Error", "Failed to save data.");
-    }
-  };
   
+
+
 
   return (
     <ScrollView style={styles.container}>
