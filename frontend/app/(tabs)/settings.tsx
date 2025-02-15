@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { db } from "../../constants/firebase/firebaseconfig"; // Import Firestore instance
 
 
 const SettingItem = ({ label, value, route }: { label: string; value: string; route: string }) => {
@@ -55,6 +56,37 @@ export default function TabSettingsScreen(): JSX.Element {
       setProfileImage(result.assets[0].uri);
     }
   };
+
+  // load data from Firestore when the component mounts
+  useEffect(() => {
+    const fetchData = async () => {
+      const userDoc = await db.collection("users").doc("default").get();
+      if (userDoc.exists) {
+        const data = userDoc.data();
+        setOwnerName(data?.ownerName || "");
+        setPetName(data?.petName || "");
+      }
+    };
+    fetchData();
+  }, []);
+
+  // save changing data to Firestore
+  const saveToFirestore = async () => {
+    try {
+      await db.collection("users").doc("default").set(
+        {
+          ownerName,
+          petName,
+        },
+        { merge: true }
+      );
+      Alert.alert("Success", "Your details have been saved!");
+    } catch (error) {
+      console.error("Error saving data: ", error);
+      Alert.alert("Error", "Failed to save data.");
+    }
+  };
+  
 
   return (
     <ScrollView style={styles.container}>
