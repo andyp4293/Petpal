@@ -12,6 +12,11 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { ref, onValue } from "firebase/database"; // ✅ Import Firebase Realtime Database functions
+import { useEffect } from "react";
+import { db } from "../../firebaseConfig"; // ✅ Ensure this is correctly imported
+
+
 
 
 const SettingItem = ({ label, value, route }: { label: string; value: string; route: string }) => {
@@ -36,6 +41,20 @@ export default function TabSettingsScreen(): JSX.Element {
   const [petName, setPetName] = useState<string>("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const defaultImage = require("../../assets/images/default1.png"); // default profile image
+
+  useEffect(() => {
+    const userRef = ref(db, "users/default"); // ✅ Reference to the database path
+  
+    onValue(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        setOwnerName(data.ownerName || ""); // ✅ Set ownerName from Firebase
+        setPetName(data.petName || ""); // ✅ Set petName from Firebase
+      } else {
+        console.log("No data found at 'users/default'");
+      }
+    });
+  }, []);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -71,8 +90,8 @@ export default function TabSettingsScreen(): JSX.Element {
         </View>
 
         {/* account details editing */}
-        <SettingItem label="Your Name" value="John Doe" route="name" />
-        <SettingItem label="Pet's Name" value="Buddy" route="pet-name" />
+        <SettingItem label="Your Name" value={ownerName} route="name" />
+        <SettingItem label="Pet's Name" value={petName} route="pet-name" />
         <SettingItem label="Email" value="john@example.com" route="email" />
       </View>
     </ScrollView>
