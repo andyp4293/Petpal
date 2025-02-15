@@ -84,7 +84,7 @@ export default function TabMobileScreen(): JSX.Element {
       </View>
       <Text style={styles.sectionTitle}>Live Camera Feed</Text>
       <View style={styles.statusGrid}>
-        <LiveCameraFeed uri="http://192.168.4.1:81/stream"/>
+        <LiveCameraFeed/> {/* uri="http://192.168.4.1:81/stream" */}
       </View>
 
       {/* Recent Logs */}

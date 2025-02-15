@@ -15,5 +15,9 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
+<<<<<<< HEAD
 , "firebaseConfig.js"  ]
+=======
+, "constants/firebase/test.js"  ]
+>>>>>>> 18b94a3a4109b3a4fc5809d3688a2f0ad2c54461
 }
