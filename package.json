@@ -8,5 +8,9 @@
     "expo": "^52.0.35",
     "expo-dev-client": "^5.0.12",
     "firebase": "^11.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/react": "~18.3.12"
   }
 }
