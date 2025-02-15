@@ -12,8 +12,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { ref, onValue } from "firebase/database"; // ✅ Import Firebase Realtime Database functions
-import { useEffect } from "react";
+import { ref, onValue, get} from "firebase/database"; // ✅ Import Firebase Realtime Database functions
 import { db } from "../../firebaseConfig"; // ✅ Ensure this is correctly imported
 
 
