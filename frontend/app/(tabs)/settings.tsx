@@ -20,7 +20,6 @@ import { db } from "../../firebaseConfig"; // ✅ Ensure this is correctly impor
 
 const SettingItem = ({ label, value, route }: { label: string; value: string; route: string }) => {
   const router = useRouter();
-  console.log(process.env.EXPO_PUBLIC_FIREBASE_API_KEY)
 
   return (
     <TouchableOpacity
@@ -77,7 +76,6 @@ export default function TabSettingsScreen(): JSX.Element {
 
   // load data from Firestore when the component mounts
   useEffect(() => {
-    console.log("🔥 Firebase DB instance:", db); // Log database instance
   
     const fetchData = async () => {
       try {
