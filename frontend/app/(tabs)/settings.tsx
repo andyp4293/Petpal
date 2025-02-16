@@ -15,9 +15,6 @@ import { useRouter } from "expo-router";
 import { ref, onValue, get} from "firebase/database"; // ✅ Import Firebase Realtime Database functions
 import { db } from "../../firebaseConfig"; // ✅ Ensure this is correctly imported
 
-
-
-
 const SettingItem = ({ label, value, route }: { label: string; value: string; route: string }) => {
   const router = useRouter();
 
@@ -74,7 +71,7 @@ export default function TabSettingsScreen(): JSX.Element {
     }
   };
 
-  // load data from Firestore when the component mounts
+
   useEffect(() => {
   
     const fetchData = async () => {
@@ -93,8 +90,6 @@ export default function TabSettingsScreen(): JSX.Element {
     fetchData();
   }, []);
   
-
-
 
   return (
     <ScrollView style={styles.container}>

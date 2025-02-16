@@ -1,4 +1,3 @@
-import { useLocalSearchParams } from "expo-router";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -6,11 +5,62 @@ import React from "react";
 import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { ref, onValue, get, update } from "firebase/database"
+import { db } from "../../firebaseConfig"
+
 export default function SettingsDetailScreen() {
   const [ownersName, setOwnersValue] = useState("");
   const navigation = useNavigation();
 
-  // Dynamically set the header title
+  useEffect(() => {
+    const fetchOwnerName = async () => {
+      try {
+        const userRef = ref(db, 'users/default');
+        const snapshot = await get(userRef)
+
+        if(snapshot.exists()){
+          const data = snapshot.val();
+          console.log("Bruh ", data);
+          
+          if(typeof data === "object" && data.ownerName){
+            setOwnersValue(String(data.ownerName));
+          }
+          else{
+            setOwnersValue("");
+          }
+        }
+        else{
+          console.log('No data found');
+        }
+      }
+      catch(error){
+        console.error(error)
+      }
+    };
+
+    fetchOwnerName();
+  }, []);
+
+  const updateName = async () => {
+    try {
+      if(ownersName.trim() === ""){
+        console.log(ownersName);
+        console.log("Name can not be empty");
+        return;
+      }
+
+      const userRef = ref(db, "users/default");
+      await update(userRef, { ownerName: ownersName })
+      console.log("Name changed successfully");
+      navigation.goBack();
+      
+    }
+    catch(error){
+      console.log("Error!");
+    }
+  }
+
+  // Dynamically set the header title and add name from db as placeholder
   useEffect(() => {
     navigation.setOptions({
       title: "Update Owner's Name",
@@ -23,8 +73,13 @@ export default function SettingsDetailScreen() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
       ),
+      headerRight: () => (
+        <TouchableOpacity onPress={updateName}>
+          <Ionicons name="checkmark-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      )
     });
-  }, [navigation]);
+  }, [navigation, ownersName]);
   
 
   return (
