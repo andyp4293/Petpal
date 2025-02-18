@@ -1,16 +1,17 @@
-import { View, Text, TextInput, StyleSheet } from "react-native";
-import { useState, useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
-import React from "react";
+import { View, TextInput, StyleSheet } from "react-native";
+import { useState, useEffect, useRef} from "react";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import React, { useCallback} from "react";
 import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { ref, onValue, get, update } from "firebase/database"
+import { ref, get, update } from "firebase/database"
 import { db } from "../../firebaseConfig"
 
 export default function SettingsDetailScreen() {
   const [ownersName, setOwnersName] = useState("");
   const navigation = useNavigation();
+    const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     const fetchOwnerName = async () => {
@@ -40,6 +41,14 @@ export default function SettingsDetailScreen() {
 
     fetchOwnerName();
   }, []);
+
+    useFocusEffect(
+      useCallback(() => {
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 1); // Small delay ensures focus works properly
+      }, [])
+    );
 
   const updateName = async () => {
     try {
@@ -85,6 +94,7 @@ export default function SettingsDetailScreen() {
   return (
     <View style={styles.container}>
       <TextInput
+        ref={inputRef}
         style={styles.input}
         placeholder={`Enter New Owner's Name`}
         placeholderTextColor="#5f5f5f"
