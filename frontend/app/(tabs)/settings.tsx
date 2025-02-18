@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   ScrollView,
   Image,
@@ -35,17 +34,19 @@ const SettingItem = ({ label, value, route }: { label: string; value: string; ro
 export default function TabSettingsScreen(): JSX.Element {
   const [ownerName, setOwnerName] = useState<string>("");
   const [petName, setPetName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const defaultImage = require("../../assets/images/default1.png"); // default profile image
 
   useEffect(() => {
-    const userRef = ref(db, "users/default"); // ✅ Reference to the database path
+    const userRef = ref(db, "users/default"); // reference to the database path
   
     onValue(userRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
-        setOwnerName(data.ownerName || ""); // ✅ Set ownerName from Firebase
-        setPetName(data.petName || ""); // ✅ Set petName from Firebase
+        setOwnerName(data.ownerName || ""); // set ownerName from Firebase
+        setPetName(data.petName || ""); // set petName from Firebase
+        setEmail(data.email || ""); // set email from Firebase
       } else {
         console.log("No data found at 'users/default'");
       }
@@ -78,12 +79,12 @@ export default function TabSettingsScreen(): JSX.Element {
       try {
         const snapshot = await get(ref(db, "users/default"));
         if (snapshot.exists()) {
-          console.log("✅ Data fetched:", snapshot.val());
+          console.log("Data fetched:", snapshot.val());
         } else {
-          console.log("❌ No data found in Firebase.");
+          console.log("No data found in Firebase.");
         }
       } catch (error) {
-        console.error("❌ Error fetching data:", error);
+        console.error("Error fetching data:", error);
       }
     };
   
@@ -108,7 +109,7 @@ export default function TabSettingsScreen(): JSX.Element {
         {/* account details editing */}
         <SettingItem label="Your Name" value={ownerName} route="name" />
         <SettingItem label="Pet's Name" value={petName} route="pet-name" />
-        <SettingItem label="Email" value="john@example.com" route="email" />
+        <SettingItem label="Email" value={email} route="email" />
       </View>
     </ScrollView>
   );
