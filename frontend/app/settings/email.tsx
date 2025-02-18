@@ -1,45 +1,43 @@
-import { View, TextInput, StyleSheet } from "react-native";
-import { useState, useEffect, useRef} from "react";
+import { View, TextInput, StyleSheet, Text, Alert } from "react-native";
+import { useState, useEffect, useRef } from "react";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import React, { useCallback} from "react";
+import React, { useCallback } from "react";
 import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { ref, get, update } from "firebase/database"
-import { db } from "../../firebaseConfig"
+import { ref, get, update } from "firebase/database";
+import { db } from "../../firebaseConfig";
 
 export default function SettingsDetailScreen() {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation();
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    const fetchemail = async () => {
+    const fetchEmail = async () => {
       try {
-        const userRef = ref(db, 'users/default');
-        const snapshot = await get(userRef)
+        const userRef = ref(db, "users/default");
+        const snapshot = await get(userRef);
 
-        if(snapshot.exists()){
+        if (snapshot.exists()) {
           const data = snapshot.val();
           console.log(data);
-          
-          if(typeof data === "object" && data.email){
+
+          if (typeof data === "object" && data.email) {
             setEmail(String(data.email));
-          }
-          else{
+          } else {
             setEmail("");
           }
+        } else {
+          console.log("No data found");
         }
-        else{
-          console.log('No data found');
-        }
-      }
-      catch(error){
-        console.error(error)
+      } catch (error) {
+        console.error(error);
       }
     };
 
-    fetchemail();
+    fetchEmail();
   }, []);
 
   useFocusEffect(
@@ -50,26 +48,35 @@ export default function SettingsDetailScreen() {
     }, [])
   );
 
-  const updateName = async () => {
+  // Email validation function
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const updateEmail = async () => {
+    if (email.trim() === "") {
+      setError("Email cannot be empty");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setError("Invalid email format");
+      return;
+    }
+
     try {
-      if(email.trim() === ""){
-        console.log(email);
-        console.log("Name can not be empty");
-        return;
-      }
-
       const userRef = ref(db, "users/default");
-      await update(userRef, { email: email })
-      console.log("Name changed successfully");
+      await update(userRef, { email });
+      console.log("Email updated successfully");
       navigation.goBack();
-      
+    } catch (error) {
+      console.log("Error updating email!");
+      Alert.alert("Error", "Could not update email. Please try again.");
     }
-    catch(error){
-      console.log("Error!");
-    }
-  }
+  };
 
-  // Dynamically set the header title and add name from db as placeholder
+  // Dynamically set the header title and add email from db as placeholder
   useEffect(() => {
     navigation.setOptions({
       title: "Update Email",
@@ -83,24 +90,29 @@ export default function SettingsDetailScreen() {
         </TouchableOpacity>
       ),
       headerRight: () => (
-        <TouchableOpacity onPress={updateName}>
+        <TouchableOpacity onPress={updateEmail}>
           <Ionicons name="checkmark-outline" size={24} color="#fff" />
         </TouchableOpacity>
-      )
+      ),
     });
   }, [navigation, email]);
-  
 
   return (
     <View style={styles.container}>
       <TextInput
         ref={inputRef}
-        style={styles.input}
-        placeholder={`Enter New Owner's Name`}
+        style={[styles.input, error ? styles.inputError : null]}
+        placeholder="Enter New Email"
         placeholderTextColor="#5f5f5f"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => {
+          setEmail(text);
+          setError(null); // Clear error when user types
+        }}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 }
@@ -110,13 +122,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     backgroundColor: "#ede8d0", // Beige background
-  },
-  label: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1e3504", // Dark earthy green
-    marginBottom: 12,
-    textAlign: "center",
   },
   input: {
     borderWidth: 1,
@@ -131,5 +136,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3, // Shadow for Android
+  },
+  inputError: {
+    borderColor: "#d9534f", // Red border when error
+  },
+  errorText: {
+    color: "#d9534f",
+    fontSize: 14,
+    marginTop: 8,
   },
 });
