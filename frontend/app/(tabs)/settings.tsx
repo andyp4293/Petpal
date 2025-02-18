@@ -11,8 +11,12 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { ref, onValue, get} from "firebase/database"; // ✅ Import Firebase Realtime Database functions
-import { db } from "../../firebaseConfig"; // ✅ Ensure this is correctly imported
+import { ref, onValue, get, update} from "firebase/database"; 
+import { db } from "../../firebaseConfig"; 
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { storage } from "../../firebaseConfig";
+
+
 
 const SettingItem = ({ label, value, route }: { label: string; value: string; route: string }) => {
   const router = useRouter();
@@ -47,32 +51,35 @@ export default function TabSettingsScreen(): JSX.Element {
         setOwnerName(data.ownerName || ""); // set ownerName from Firebase
         setPetName(data.petName || ""); // set petName from Firebase
         setEmail(data.email || ""); // set email from Firebase
+        if (data.profileImage){
+          setProfileImage(data.profileImage);
+        }
       } else {
         console.log("No data found at 'users/default'");
       }
     });
   }, []);
 
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permission Denied", "Please allow access to your photos to upload a profile picture.");
+      Alert.alert("Permission Denied", "Please allow access to your photos.");
       return;
     }
-
+  
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
     });
-    
-    
-
+  
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      await uploadProfileImage(result.assets[0].uri); 
     }
   };
+  
 
 
   useEffect(() => {
@@ -92,6 +99,47 @@ export default function TabSettingsScreen(): JSX.Element {
   
     fetchData();
   }, []);
+
+  const uploadProfileImage = async (imageUri: string) => {
+    try {
+      const userRef = ref(db, "users/default");
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+  
+      const imageRef = storageRef(storage, "profile_pictures/default_profile.jpg");
+      await uploadBytes(imageRef, blob);
+      const downloadUrl = await getDownloadURL(imageRef);
+  
+      // Log download URL to ensure it's retrieved correctly
+      console.log("Download URL:", downloadUrl);
+  
+      // Update profile image URL in Firebase Realtime Database
+      await update(userRef, { profileImage: downloadUrl });
+  
+      // Confirm update
+      const snapshot = await get(userRef);
+      console.log("Updated data:", snapshot.val());
+  
+      // Update local state
+      setProfileImage(downloadUrl);
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      Alert.alert("Upload Failed", "Failed to upload the image.");
+    }
+  };
+  
+const deleteOldImage = async (imageUrl: string | null) => {
+  if (!imageUrl) return; 
+  
+  try {
+    const imagePath = decodeURIComponent(imageUrl.split("/o/")[1].split("?")[0]);
+    const oldImageRef = storageRef(storage, imagePath);
+    await deleteObject(oldImageRef);
+  } catch (error) {
+    console.warn("Error deleting old image:", error);
+  }
+};
+
   
 
   return (
