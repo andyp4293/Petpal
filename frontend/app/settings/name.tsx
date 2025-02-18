@@ -9,7 +9,7 @@ import { ref, onValue, get, update } from "firebase/database"
 import { db } from "../../firebaseConfig"
 
 export default function SettingsDetailScreen() {
-  const [ownersName, setOwnersValue] = useState("");
+  const [ownersName, setOwnersName] = useState("");
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -23,10 +23,10 @@ export default function SettingsDetailScreen() {
           console.log("Bruh ", data);
           
           if(typeof data === "object" && data.ownerName){
-            setOwnersValue(String(data.ownerName));
+            setOwnersName(String(data.ownerName));
           }
           else{
-            setOwnersValue("");
+            setOwnersName("");
           }
         }
         else{
@@ -89,7 +89,7 @@ export default function SettingsDetailScreen() {
         placeholder={`Enter New Owner's Name`}
         placeholderTextColor="#5f5f5f"
         value={ownersName}
-        onChangeText={setOwnersValue}
+        onChangeText={setOwnersName}
       />
     </View>
   );

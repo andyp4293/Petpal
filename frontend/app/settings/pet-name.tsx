@@ -1,4 +1,3 @@
-import { useLocalSearchParams } from "expo-router";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -6,15 +5,65 @@ import React from "react";
 import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { ref, onValue, get, update } from "firebase/database"
+import { db } from "../../firebaseConfig"
+
 export default function SettingsDetailScreen() {
-  const { route } = useLocalSearchParams(); // Get the setting type from the URL
-  const [value, setValue] = useState("");
+  const [petName, setPetName] = useState("");
   const navigation = useNavigation();
 
-  // Dynamically set the header title
+  useEffect(() => {
+    const fetchPetName = async () => {
+      try {
+        const userRef = ref(db, 'users/default');
+        const snapshot = await get(userRef)
+
+        if(snapshot.exists()){
+          const data = snapshot.val();
+          console.log(data);
+          
+          if(typeof data === "object" && data.petName){
+            setPetName(String(data.petName));
+          }
+          else{
+            setPetName("");
+          }
+        }
+        else{
+          console.log('No data found');
+        }
+      }
+      catch(error){
+        console.error(error)
+      }
+    };
+
+    fetchPetName();
+  }, []);
+
+  const updateName = async () => {
+    try {
+      if(petName.trim() === ""){
+        console.log(petName);
+        console.log("Name can not be empty");
+        return;
+      }
+
+      const userRef = ref(db, "users/default");
+      await update(userRef, { petName: petName })
+      console.log("Name changed successfully");
+      navigation.goBack();
+      
+    }
+    catch(error){
+      console.log("Error!");
+    }
+  }
+
+  // Dynamically set the header title and add name from db as placeholder
   useEffect(() => {
     navigation.setOptions({
-      title: "Update Owner's Name",
+      title: "Update Pet's Name",
       headerStyle: { backgroundColor: "#1e3504" },
       headerTintColor: "#fff",
       headerTitleAlign: "center",
@@ -24,8 +73,13 @@ export default function SettingsDetailScreen() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
       ),
+      headerRight: () => (
+        <TouchableOpacity onPress={updateName}>
+          <Ionicons name="checkmark-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      )
     });
-  }, [navigation]);
+  }, [navigation, petName]);
   
 
   return (
@@ -34,8 +88,8 @@ export default function SettingsDetailScreen() {
         style={styles.input}
         placeholder={`Enter New Owner's Name`}
         placeholderTextColor="#5f5f5f"
-        value={value}
-        onChangeText={setValue}
+        value={petName}
+        onChangeText={setPetName}
       />
     </View>
   );
