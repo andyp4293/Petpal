@@ -1,19 +1,20 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
-  Dimensions,
   ScrollView,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons"; 
+import { ref, get, update } from "firebase/database"
+import { db } from "../../firebaseConfig"
 
 // mock data for pet status
 const petStatus = {
   potty: "55%", // logging potty capacity
   food: "20%", // logging food level
-  water: "90%", // logging water levels
+  water_level: "90%", // logging water_level levels
   timeLastPlay: "3 hour ago", // logs the time since pet got activity
 };
 
@@ -63,14 +64,62 @@ const StatusCard = ({ title, value, icon }: StatusCardProps) => {
 };
 
 export default function TabHomeScreen(): JSX.Element {
+    const [water_level, setWater] = useState<string>("");
+    const [food_level, setFood] = useState<string>(""); 
+    const [potty_level, setPotty] = useState<string>(""); 
+  
+      useEffect(() => {
+        const fetchPetStatuses = async () => {
+          try {
+            const userRef = ref(db, 'users/default/PetStatus');
+            const snapshot = await get(userRef)
+    
+            if(snapshot.exists()){
+              const data = snapshot.val();
+              console.log(data);
+              
+              if(typeof data === "object" && data.water_level ){
+                setWater(String(data.water_level));
+              }
+              else{
+                setWater("N/A");
+              }
+
+              if(typeof data === "object" && data.food_level ){
+                setFood(String(data.food_level));
+              }
+              else{
+                setFood("N/A");
+              }
+
+              if(typeof data === "object" && data.potty_level ){
+                setPotty(String(data.potty_level));
+              }
+              else{
+                setPotty("N/A");
+              }
+            }
+            else{
+              console.log('No data found');
+            }
+          }
+          catch(error){
+            console.error(error)
+          }
+        };
+    
+        fetchPetStatuses();
+      }, []);
+
+
   return (
     <ScrollView style={styles.container}>
       {/* Pet Status Overview */}
       <Text style={styles.sectionTitle}>Pet Status</Text>
       <View style={styles.statusGrid}>
-        <StatusCard title="Potty Capacity" value={petStatus.potty} icon="toilet" />
-        <StatusCard title="Water Level" value={petStatus.water} icon="tint" />
-        <StatusCard title="Food Level" value={petStatus.food} icon="pizza-slice" />
+        <StatusCard title="Potty Capacity" value={`${potty_level}%`} icon="toilet" />
+        <StatusCard title="Water Level" value={`${water_level}%`} icon="tint" />
+        <StatusCard title="Food Level" value={`${food_level}%`} icon="pizza-slice" />
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Last Exercise</Text>

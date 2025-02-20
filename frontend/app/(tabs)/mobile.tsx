@@ -1,4 +1,4 @@
-import React from "react";
+import React  from "react";
 import {
   View,
   Text,
@@ -47,8 +47,13 @@ type StatusCardProps = {
   icon: string;
 };
 
+
+
 const StatusCard = ({ title, value, icon }: StatusCardProps) => {
-  const progressBarWidth = typeof value === 'number' ? value : parseFloat(value);
+  // Get screen width (or container width if known)
+  const containerWidth = Dimensions.get('window').width * 0.8; // Assuming 80% of screen width
+  const numericValue = typeof value === 'number' ? value : parseFloat(value);
+  const progressBarWidth = (numericValue / 100) * containerWidth; // Convert percentage to pixels
 
   return (
     <View style={styles.card}>
@@ -59,12 +64,14 @@ const StatusCard = ({ title, value, icon }: StatusCardProps) => {
       <View style={styles.progressBarContainer}>
         <View style={[styles.progressBar, { width: progressBarWidth }]} />
       </View>
-      <Text style={styles.cardValue}>{typeof value === 'string' ? value : `${value}px`}</Text>
+      <Text style={styles.cardValue}>{`${numericValue}%`}</Text>
     </View>
   );
 };
 
 export default function TabMobileScreen(): JSX.Element {
+
+
   return (
     <ScrollView style={styles.container}>
       {/* Pet Status Overview */}

@@ -4,7 +4,6 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import React, { useCallback} from "react";
 import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
 import { ref, get, update } from "firebase/database"
 import { db } from "../../firebaseConfig"
 
