@@ -4,11 +4,13 @@ import {
   Text,
   FlatList,
   StyleSheet,
+  Dimensions,
   ScrollView,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons"; 
 import { ref, get, update } from "firebase/database"
 import { db } from "../../firebaseConfig"
+import { useWindowDimensions } from 'react-native';
 
 // mock data for pet status
 const petStatus = {
@@ -47,7 +49,13 @@ type StatusCardProps = {
 };
 
 const StatusCard = ({ title, value, icon }: StatusCardProps) => {
-  const progressBarWidth = typeof value === 'number' ? value : parseFloat(value);
+  const [cardWidth, setCardWidth] = useState(0); // Store actual card width
+
+
+  const numericValue = typeof value === "number" ? value : parseFloat(value.toString().replace("%", ""));
+
+  // Calculate width and prevent overflow
+  const progressBarWidth = Math.min(cardWidth, Math.round((numericValue / 100) * cardWidth));
 
   return (
     <View style={styles.card}>
@@ -55,10 +63,10 @@ const StatusCard = ({ title, value, icon }: StatusCardProps) => {
         <Text style={styles.cardTitle}>{title}</Text>
         <FontAwesome5 name={icon} size={18} color="#1e3504" />
       </View>
-      <View style={styles.progressBarContainer}>
+      <View style={styles.progressBarContainer} onLayout={(event) => setCardWidth(event.nativeEvent.layout.width)}>
         <View style={[styles.progressBar, { width: progressBarWidth }]} />
       </View>
-      <Text style={styles.cardValue}>{typeof value === 'string' ? value : `${value}px`}</Text>
+      <Text style={styles.cardValue}>{`${numericValue}%`}</Text>
     </View>
   );
 };
@@ -177,6 +185,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 10,
+    width: "100%",
   },
   cardHeader: {
     flexDirection: "row",
