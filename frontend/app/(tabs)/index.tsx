@@ -8,9 +8,8 @@ import {
   ScrollView,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons"; 
-import { ref, get, update } from "firebase/database"
+import { ref, get } from "firebase/database"
 import { db } from "../../firebaseConfig"
-import { useWindowDimensions } from 'react-native';
 
 // mock data for pet status
 const petStatus = {
@@ -49,12 +48,11 @@ type StatusCardProps = {
 };
 
 const StatusCard = ({ title, value, icon }: StatusCardProps) => {
-  const [cardWidth, setCardWidth] = useState(0); // Store actual card width
+  const [cardWidth, setCardWidth] = useState(0); 
 
 
   const numericValue = typeof value === "number" ? value : parseFloat(value.toString().replace("%", ""));
 
-  // Calculate width and prevent overflow
   const progressBarWidth = Math.min(cardWidth, Math.round((numericValue / 100) * cardWidth));
 
   return (
@@ -123,7 +121,7 @@ export default function TabHomeScreen(): JSX.Element {
   return (
     <ScrollView style={styles.container}>
       {/* Pet Status Overview */}
-      <Text style={styles.sectionTitle}>Pet Status</Text>
+      <Text style={styles.sectionTitle}>PetPal Overview</Text>
       <View style={styles.statusGrid}>
         <StatusCard title="Potty Capacity" value={`${potty_level}%`} icon="toilet" />
         <StatusCard title="Water Level" value={`${water_level}%`} icon="tint" />
@@ -163,7 +161,7 @@ export default function TabHomeScreen(): JSX.Element {
   );
 }
 
-// Styles
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

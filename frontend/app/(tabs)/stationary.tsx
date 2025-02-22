@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons"; 
+import { ref, get} from "firebase/database"
+import { db } from "../../firebaseConfig"
 
-const { width } = Dimensions.get("window");
 
 // mock data for pet status
 const petStatus = {
@@ -45,7 +47,39 @@ const notifications = [
   },
 ];
 
+type StatusCardProps = {
+  title: string;
+  value: number | string;
+  icon: string;
+};
+
+const StatusCard = ({ title, value, icon }: StatusCardProps) => {
+  const [cardWidth, setCardWidth] = useState(0); 
+
+
+  const numericValue = typeof value === "number" ? value : parseFloat(value.toString().replace("%", ""));
+
+  const progressBarWidth = Math.min(cardWidth, Math.round((numericValue / 100) * cardWidth));
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <FontAwesome5 name={icon} size={18} color="#1e3504" />
+      </View>
+      <View style={styles.progressBarContainer} onLayout={(event) => setCardWidth(event.nativeEvent.layout.width)}>
+        <View style={[styles.progressBar, { width: progressBarWidth }]} />
+      </View>
+      <Text style={styles.cardValue}>{`${numericValue}%`}</Text>
+    </View>
+  );
+};
+
 export default function TabStationaryScreen(): JSX.Element {
+  const [water_level, setWater] = useState<string>("");
+  const [food_level, setFood] = useState<string>(""); 
+  const [potty_level, setPotty] = useState<string>(""); 
+
   const renderLogItem = ({ item }: { item: any }) => (
     <View style={styles.logItem}>
       <Text style={styles.logType}>{item.type}</Text>
@@ -60,26 +94,65 @@ export default function TabStationaryScreen(): JSX.Element {
     </View>
   );
 
+  useEffect(() => {
+          const fetchPetStatuses = async () => {
+            try {
+              const userRef = ref(db, 'users/default/PetStatus');
+              const snapshot = await get(userRef)
+      
+              if(snapshot.exists()){
+                const data = snapshot.val();
+                console.log(data);
+                
+                if(typeof data === "object" && data.water_level ){
+                  setWater(String(data.water_level));
+                }
+                else{
+                  setWater("N/A");
+                }
+  
+                if(typeof data === "object" && data.food_level ){
+                  setFood(String(data.food_level));
+                }
+                else{
+                  setFood("N/A");
+                }
+  
+                if(typeof data === "object" && data.potty_level ){
+                  setPotty(String(data.potty_level));
+                }
+                else{
+                  setPotty("N/A");
+                }
+              }
+              else{
+                console.log('No data found');
+              }
+            }
+            catch(error){
+              console.error(error)
+            }
+          };
+      
+          fetchPetStatuses();
+        }, []);
+  
+
   return (
     <ScrollView style={styles.container}>
       {/* Pet Status Overview */}
-      <View style={styles.statusContainer}>
-        <Text style={styles.sectionTitle}>Pet Status</Text>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Potty Capacity:</Text>
-          <Text style={styles.statusValue}>{petStatus.potty}</Text>
-        </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Water Level:</Text>
-          <Text style={styles.statusValue}>{petStatus.water}</Text>
-        </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Food:</Text>
-          <Text style={styles.statusValue}>{petStatus.food}</Text>
-        </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Time Since Last Exercise:</Text>
-          <Text style={styles.statusValue}>{petStatus.timeLastPlay}</Text>
+      <Text style={styles.sectionTitle}>Pet Overview</Text>
+      <View style={styles.statusGrid}>
+        <StatusCard title="Potty Capacity" value={`${potty_level}%`} icon="toilet" />
+        <StatusCard title="Water Level" value={`${water_level}%`} icon="tint" />
+        <StatusCard title="Food Level" value={`${food_level}%`} icon="pizza-slice" />
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Last Exercise</Text>
+            <FontAwesome5 name="dumbbell" size={18} color="#1e3504" />
+          </View>
+          <Text style={styles.timeValue}>{petStatus.timeLastPlay}</Text>
+          <Text style={styles.timeLabel}>Time since last activity</Text>
         </View>
       </View>
 
@@ -184,6 +257,67 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   notificationMessage: {
+    color: "#555",
+  },
+  statusGrid: {
+    marginBottom: 20,
+  },
+  card: {
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 10,
+    width: "100%",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginRight: 8,
+    color: "#1e3504",
+  },
+  cardValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  progressBarContainer: {
+    width: "100%",
+    height: 6,
+    backgroundColor: "#ddd",
+    borderRadius: 3,
+    marginVertical: 5,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: "#1e3504",
+    borderRadius: 3,
+  },
+  timeValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  timeLabel: {
+    fontSize: 14,
+    color: "#555",
+  },
+  listItem: {
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 5,
+    marginBottom: 8,
+  },
+  itemType: {
+    fontWeight: "bold",
+    color: "#333",
+  },
+  itemText: {
     color: "#555",
   },
 });

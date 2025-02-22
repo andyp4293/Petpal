@@ -74,24 +74,9 @@ export default function TabMobileScreen(): JSX.Element {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Pet Status Overview */}
-      <Text style={styles.sectionTitle}>Pet Status</Text>
-      <View style={styles.statusGrid}>
-        <StatusCard title="Potty Capacity" value={petStatus.potty} icon="toilet" />
-        <StatusCard title="Water Level" value={petStatus.water} icon="tint" />
-        <StatusCard title="Food Level" value={petStatus.food} icon="pizza-slice" />
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Last Exercise</Text>
-            <FontAwesome5 name="dumbbell" size={18} color="#1e3504" />
-          </View>
-          <Text style={styles.timeValue}>{petStatus.timeLastPlay}</Text>
-          <Text style={styles.timeLabel}>Time since last activity</Text>
-        </View>
-      </View>
       <Text style={styles.sectionTitle}>Live Camera Feed</Text>
       <View style={styles.statusGrid}>
-        <LiveCameraFeed/> {/* uri="http://192.168.4.1:81/stream" */}
+        <LiveCameraFeed uri="http://192.168.4.1:81/stream"/> 
       </View>
 
       {/* Recent Logs */}
