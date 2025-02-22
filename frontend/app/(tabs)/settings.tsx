@@ -41,6 +41,9 @@ export default function TabSettingsScreen(): JSX.Element {
   const [email, setEmail] = useState<string>("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const defaultImage = require("../../assets/images/default1.png"); // default profile image
+  const [refillWater, setRefillWater] = useState<string>("");
+  const [replacePotty, setReplacePotty] = useState<string>("");
+  const [refillFood, setRefillFood ] = useState<string>("");
 
   useEffect(() => {
     const userRef = ref(db, "users/default"); // reference to the database path
@@ -128,23 +131,13 @@ export default function TabSettingsScreen(): JSX.Element {
     }
   };
   
-const deleteOldImage = async (imageUrl: string | null) => {
-  if (!imageUrl) return; 
-  
-  try {
-    const imagePath = decodeURIComponent(imageUrl.split("/o/")[1].split("?")[0]);
-    const oldImageRef = storageRef(storage, imagePath);
-    await deleteObject(oldImageRef);
-  } catch (error) {
-    console.warn("Error deleting old image:", error);
-  }
-};
 
   
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Profile Settings</Text>
         {/* profile picture section */}
         <View style={styles.profileContainer}>
           <TouchableOpacity onPress={pickImage}>
@@ -160,6 +153,14 @@ const deleteOldImage = async (imageUrl: string | null) => {
         <SettingItem label="Your Name" value={ownerName} route="name" />
         <SettingItem label="Pet's Name" value={petName} route="pet-name" />
         <SettingItem label="Email" value={email} route="email" />
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Maintainenance Settings</Text>
+
+        {/* settings for refill/replacement on the mobile and stationary robots */}
+        <SettingItem label="Refill Water" value={refillWater} route="name" />
+        <SettingItem label="Replace Potty" value={replacePotty} route="pet-name" />
+        <SettingItem label="Refill Food" value={refillFood} route="email" />
       </View>
     </ScrollView>
   );
@@ -193,6 +194,12 @@ const styles = StyleSheet.create({
   profileText: {
     marginTop: 8,
     fontSize: 14,
+    color: "#1e3504",
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
     color: "#1e3504",
   },
   valueContainer: {
