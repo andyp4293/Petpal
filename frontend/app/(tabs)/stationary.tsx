@@ -141,19 +141,11 @@ export default function TabStationaryScreen(): JSX.Element {
   return (
     <ScrollView style={styles.container}>
       {/* Pet Status Overview */}
-      <Text style={styles.sectionTitle}>Pet Overview</Text>
+      <Text style={styles.sectionTitle}>PetPal Station Statuses</Text>
       <View style={styles.statusGrid}>
         <StatusCard title="Potty Capacity" value={`${potty_level}%`} icon="toilet" />
         <StatusCard title="Water Level" value={`${water_level}%`} icon="tint" />
         <StatusCard title="Food Level" value={`${food_level}%`} icon="pizza-slice" />
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Last Exercise</Text>
-            <FontAwesome5 name="dumbbell" size={18} color="#1e3504" />
-          </View>
-          <Text style={styles.timeValue}>{petStatus.timeLastPlay}</Text>
-          <Text style={styles.timeLabel}>Time since last activity</Text>
-        </View>
       </View>
 
       {/* Recent Logs */}

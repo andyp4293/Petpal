@@ -46,9 +46,10 @@ export default function TabSettingsScreen(): JSX.Element {
   const [refillFood, setRefillFood ] = useState<string>("");
 
   useEffect(() => {
-    const userRef = ref(db, "users/default"); // reference to the database path
+    const profileRef = ref(db, "users/default"); // reference to the database path for profile settings
+    const maintenanceRef = ref(db, "users/default/PetMaintenanceSettings"); // reference to the database path for maintenance settings
   
-    onValue(userRef, (snapshot) => {
+    onValue(profileRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         setOwnerName(data.ownerName || ""); // set ownerName from Firebase
@@ -57,6 +58,17 @@ export default function TabSettingsScreen(): JSX.Element {
         if (data.profileImage){
           setProfileImage(data.profileImage);
         }
+      } else {
+        console.log("No data found at 'users/default'");
+      }
+    });
+
+    onValue(maintenanceRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        setRefillWater(data.waterRefill_level || ""); // set refillWater from Firebase
+        setReplacePotty(data.pottyReplace_level || ""); // set replacePotty from Firebase
+        setRefillFood(data.foodRefill_level || ""); // set foodRefill from Firebase
       } else {
         console.log("No data found at 'users/default'");
       }
@@ -155,12 +167,12 @@ export default function TabSettingsScreen(): JSX.Element {
         <SettingItem label="Email" value={email} route="email" />
       </View>
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Maintainenance Settings</Text>
+        <Text style={styles.sectionTitle}>Maintenance Settings</Text>
 
         {/* settings for refill/replacement on the mobile and stationary robots */}
-        <SettingItem label="Refill Water" value={refillWater} route="name" />
-        <SettingItem label="Replace Potty" value={replacePotty} route="pet-name" />
-        <SettingItem label="Refill Food" value={refillFood} route="email" />
+        <SettingItem label="Refill Water" value={`${refillWater}%`} route="refillWater" />
+        <SettingItem label="Replace Potty" value={`${replacePotty}%`}route="replacePotty" />
+        <SettingItem label="Refill Food" value={`${refillFood}%`} route="refillFood" />
       </View>
     </ScrollView>
   );

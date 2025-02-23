@@ -1,104 +1,83 @@
-import { View, TextInput, StyleSheet } from "react-native";
-import { useState, useEffect, useRef} from "react";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import React, { useCallback} from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Slider from "@react-native-community/slider";
+import { ref, get, update } from "firebase/database";
+import { db } from "../../firebaseConfig";
 
-import { ref, get, update } from "firebase/database"
-import { db } from "../../firebaseConfig"
-
-export default function SettingsDetailScreen() {
-  const [waterRefill, setWaterRefill] = useState("");
+function SettingsDetailScreen() {
+  const [waterRefill, setWaterRefill] = useState<number>(50); // Default value
   const navigation = useNavigation();
-    const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    const fetchOwnerName = async () => {
+    const fetchWaterRefillLevel = async () => {
       try {
-        const userRef = ref(db, 'users/default/PetMaintenanceSettings');
-        const snapshot = await get(userRef)
+        const userRef = ref(db, "users/default/PetMaintenanceSettings");
+        const snapshot = await get(userRef);
 
-        if(snapshot.exists()){
+        if (snapshot.exists()) {
           const data = snapshot.val();
-          
-          if(typeof data === "object" && data.waterRefill_level){
-            setWaterRefill(String(data.waterRefill_level));
+          if (typeof data === "object" && typeof data.waterRefill_level === "number") {
+            setWaterRefill(data.waterRefill_level);
           }
-          else{
-            setWaterRefill("");
-          }
+        } else {
+          console.log("No data found");
         }
-        else{
-          console.log('No data found');
-        }
-      }
-      catch(error){
-        console.error(error)
+      } catch (error) {
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchOwnerName();
+    fetchWaterRefillLevel();
   }, []);
 
-    useFocusEffect(
-      useCallback(() => {
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 1); // Small delay ensures focus works properly
-      }, [])
-    );
-
-  const updateName = async () => {
+  const updateWaterRefillLevel = async () => {
     try {
-      if(waterRefill.trim() === ""){
-        console.log(waterRefill);
-        console.log("Value can not be empty");
-        return;
-      }
-
       const userRef = ref(db, "users/default/PetMaintenanceSettings");
-      await update(userRef, { waterRefill_level: waterRefill })
+      await update(userRef, { waterRefill_level: waterRefill });
       console.log("Setting changed successfully");
       navigation.goBack();
-      
+    } catch (error) {
+      console.log("Error updating data:", error);
     }
-    catch(error){
-      console.log("Error!");
-    }
-  }
+  };
 
-  // Dynamically set the header title and add name from db as placeholder
+  // Update header with custom title and buttons
   useEffect(() => {
     navigation.setOptions({
-      title: "Update At What Water Level to Refill",
+      title: "Set Water Level to Refill (%)",
       headerStyle: { backgroundColor: "#1e3504" },
       headerTintColor: "#fff",
       headerTitleAlign: "center",
-      headerBackTitleVisible: false, // Hides back title text on iOS
+      headerBackTitleVisible: false,
       headerLeft: () => (
         <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 10 }}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
       ),
       headerRight: () => (
-        <TouchableOpacity onPress={updateName}>
+        <TouchableOpacity onPress={updateWaterRefillLevel} style={{ marginRight: 10 }}>
           <Ionicons name="checkmark-outline" size={24} color="#fff" />
         </TouchableOpacity>
-      )
+      ),
     });
   }, [navigation, waterRefill]);
-  
 
   return (
     <View style={styles.container}>
-      <TextInput
-        ref={inputRef}
-        style={styles.input}
-        placeholder={`Enter New Level to Refill Water`}
-        placeholderTextColor="#5f5f5f"
+      <Text style={styles.label}>Refill Level: {waterRefill}%</Text>
+      <Slider
+        style={styles.slider}
+        minimumValue={0}
+        maximumValue={100}
+        step={5}
         value={waterRefill}
-        onChangeText={setWaterRefill}
+        onValueChange={setWaterRefill}
+        minimumTrackTintColor="#1e3504"
+        maximumTrackTintColor="#D3D3D3"
+        thumbTintColor="#1e3504"
       />
     </View>
   );
@@ -108,27 +87,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    backgroundColor: "#ede8d0", // Beige background
+    backgroundColor: "#ede8d0",
+    justifyContent: "center",
+    alignItems: "center",
   },
   label: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#1e3504", // Dark earthy green
+    color: "#1e3504",
     marginBottom: 12,
     textAlign: "center",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#5a7748", // Muted earthy green border
-    padding: 14,
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    fontSize: 16,
-    color: "#333",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3, // Shadow for Android
+  slider: {
+    width: "90%",
+    height: 40,
   },
 });
+
+export default SettingsDetailScreen;
