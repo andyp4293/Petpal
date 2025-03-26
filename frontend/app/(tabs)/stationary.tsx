@@ -6,11 +6,21 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
+  TouchableOpacity,
+  Touchable
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons"; 
-import { ref, get} from "firebase/database"
+import { ref, get, set } from "firebase/database"
 import { db } from "../../firebaseConfig"
+import axios from "axios";
 
+const RASPBERRY_PI_IP = "192.168.48.240";
+
+const triggerMotor = async (type: "water" | "food") => {
+  await set(ref(db, "users/default/commands"), {
+    motor_command: type.toUpperCase(),
+  })
+}
 
 // mock data for pet status
 const petStatus = {
@@ -94,6 +104,17 @@ export default function TabStationaryScreen(): JSX.Element {
     </View>
   );
 
+  // const sendRequest = async (motorType: String) => {
+  //   try {
+  //     const response = await axios.post(`${RASPBERRY_PI_IP}/activate`, {
+  //       motor: motorType,
+  //     });
+  //     console.log(response.data.message);
+  //   } catch(error) {
+  //     console.log("FAILURE:", error);
+  //   }
+  // }
+
   useEffect(() => {
           const fetchPetStatuses = async () => {
             try {
@@ -148,6 +169,16 @@ export default function TabStationaryScreen(): JSX.Element {
         <StatusCard title="Food Level" value={`${food_level}%`} icon="pizza-slice" />
       </View>
 
+        {/* Refill Water and Food */}
+      <View style={styles.refillButtonsContainer}>
+        <TouchableOpacity style={styles.button} onPress={() => triggerMotor("water")}>
+          <Text style={styles.buttonText}>Refill Water</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => triggerMotor("food")}>
+          <Text style={styles.buttonText}>Refill Food</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Recent Logs */}
       <View style={styles.logsContainer}>
         <Text style={styles.sectionTitle}>Recent Updates</Text>
@@ -158,7 +189,6 @@ export default function TabStationaryScreen(): JSX.Element {
           scrollEnabled={false}
         />
       </View>
-
 
       {/* Notifications */}
       <View style={styles.notificationsContainer}>
@@ -225,7 +255,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   button: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#1e3504",
     padding: 15,
     borderRadius: 5,
     width: "48%",
@@ -312,4 +342,9 @@ const styles = StyleSheet.create({
   itemText: {
     color: "#555",
   },
+  refillButtonsContainer: {
+    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  }
 });
