@@ -173,6 +173,7 @@ export default function TabSettingsScreen(): JSX.Element {
         <SettingItem label="Refill Water" value={`${refillWater}%`} route="refillWater" />
         <SettingItem label="Replace Potty" value={`${replacePotty}%`}route="replacePotty" />
         <SettingItem label="Refill Food" value={`${refillFood}%`} route="refillFood" />
+        <SettingItem label="Food Schedule" value={" "} route="food-schedule" />
       </View>
     </ScrollView>
   );

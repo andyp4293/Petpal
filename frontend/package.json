@@ -39,6 +39,7 @@
     "react-native": "^0.76.3",
     "react-native-calendars": "^1.1307.0",
     "react-native-gesture-handler": "~2.21.2",
+    "react-native-mjpeg-player": "^1.0.5",
     "react-native-pager-view": "^6.6.0",
     "react-native-reanimated": "^3.16.7",
     "react-native-reanimated-carousel": "^3.5.1",
