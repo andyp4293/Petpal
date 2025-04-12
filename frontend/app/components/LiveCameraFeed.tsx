@@ -9,14 +9,14 @@ interface LiveCameraFeedProps {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  webview: { flex: 1, width: '100%', height: 300 },
+  webview: { flex: 1, width: '100%', height: 255 },
 });
 
 export default function LiveCameraFeed({ uri }: LiveCameraFeedProps) {
   return (
     <View style={styles.container}>
       <WebView
-        source={{ uri: uri || "http://192.168.4.1:81/stream" }}
+        source={{ uri: uri }}
         style={styles.webview}
         javaScriptEnabled={true}
         domStorageEnabled={true}

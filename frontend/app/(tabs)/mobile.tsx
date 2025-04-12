@@ -76,7 +76,7 @@ export default function TabMobileScreen(): JSX.Element {
     <ScrollView style={styles.container}>
       <Text style={styles.sectionTitle}>Live Camera Feed</Text>
       <View style={styles.statusGrid}>
-        <LiveCameraFeed uri="http://192.168.4.1:81/stream"/> 
+        <LiveCameraFeed uri="http://192.168.137.178:81/stream"/> 
       </View>
 
       {/* Recent Logs */}
