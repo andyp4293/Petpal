@@ -107,8 +107,24 @@ export default function TabStationaryScreen(): JSX.Element {
     setFoodRefillTimes(prevTimes => [...prevTimes, formattedTime]);
   }
 
+  const handleAddWaterTime = (pickedDuration: {hours?: number; minutes?: number}) => {
+    const formattedTime = formatTime(pickedDuration);
+    setWaterRefillTimes(prevTimes => [...prevTimes, formattedTime]);
+  }
+
+  const handleAddPottyTime = (pickedDuration: {hours?: number; minutes?: number}) => {
+    const formattedTime = formatTime(pickedDuration);
+    setPottyRefillTimes(prevTimes => [...prevTimes, formattedTime]);
+  }
+
   const handleRemoveFoodTime = (index: number) => {
     setFoodRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
+  }
+  const handleRemoveWaterTime = (index: number) => {
+    setWaterRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
+  }
+  const handleRemovePottyTime = (index: number) => {
+    setPottyRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
   }
 
   const formatTime = ({
@@ -213,7 +229,10 @@ export default function TabStationaryScreen(): JSX.Element {
               const snapshot = await get(scheduleRef);
               if(snapshot.exists()){
                 const data = snapshot.val();
+                setToggleScheduling(data.toggleScheduling)
                 setFoodRefillTimes(data.foodRefillTimes || [])
+                setWaterRefillTimes(data.waterRefillTimes || []);
+                setPottyRefillTimes(data.pottyRefillTimes || []);
                 console.log("Retrieved data:", data);
               } else {
                 console.log("No data found");
@@ -268,6 +287,7 @@ export default function TabStationaryScreen(): JSX.Element {
         </View>
         <View style={[styles.card, !toggleScheduling && styles.disabledCard]}>
           <View style={styles.schedulingParameters}>
+            {/* Food Scheduling */}
             <View style={styles.schedulingItem}>
               <Text style={[{color: toggleScheduling ? 'black' : '#555', justifyContent: 'center'}]}>Refill Food</Text>
               <View style={{flexDirection: 'column'}}>
@@ -279,13 +299,6 @@ export default function TabStationaryScreen(): JSX.Element {
                           <Text style={{fontSize: 24, color: 'white', fontWeight: 'bold', marginHorizontal: 10}}>-</Text>
                         </TouchableOpacity>
                       </TouchableOpacity>
-
-                    // <View key={index} style={styles.scheduleButton}>
-                    //   <Text style={{color: 'white', marginRight: 8}}>{time}</Text>
-                    //   <TouchableOpacity onPress={() => handleRemoveFoodTime(index)} style={styles.scheduleButton}>
-                    //     <Text style={{color: 'white', fontWeight: 'bold'}}>----</Text>
-                    //   </TouchableOpacity>
-                    // </View>
                   ))
                 ): <View />}
 
@@ -311,77 +324,76 @@ export default function TabStationaryScreen(): JSX.Element {
                 use12HourPicker
               />
             </View>
-            {/* <View style={styles.schedulingItem}>
-              <Text style={[{color: 'black'}, !toggleScheduling && styles.disabledScheduleText]}>Refill Food</Text>
-              <TouchableOpacity 
-                style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButton]}
-                onPress={() => setShowFoodTimePicker(true)}
-                disabled={!toggleScheduling}
-              >
-                <Text style={{color: 'white'}}>
-                  {foodRefillTime}
-                </Text>
-              </TouchableOpacity>
-              <TimerPickerModal 
-                visible={showFoodTimePicker}
-                setIsVisible={setShowFoodTimePicker}
-                onConfirm={(pickedDuration) => {
-                  setFoodRefillTime(formatTime(pickedDuration));
-                  setShowFoodTimePicker(false);
-                }}
-                hideSeconds
-                modalTitle="Set Time"
-                onCancel={() => setShowFoodTimePicker(false)}
-                closeOnOverlayPress
-                use12HourPicker
-              />
-            </View> */}
+            {/* Schedule Water Refill */}
             <View style={styles.schedulingItem}>
-              <Text>Refill Water</Text>
-              <TouchableOpacity 
-                style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButton]}
-                onPress={() => setShowWaterTimePicker(true)}
-                disabled={!toggleScheduling}
-              >
-                <Text style={{color: 'white'}}>
-                  {waterRefillTimes}
-                </Text>
-              </TouchableOpacity>
-              <TimerPickerModal 
+              <Text style={[{color: toggleScheduling ? 'black' : '#555', justifyContent: 'center'}]}>Refill Water</Text>
+              <View style={{flexDirection: 'column'}}>
+                {waterRefillTimes.length > 0 ? (
+                  waterRefillTimes.map((time, index) => (
+                      <TouchableOpacity key={index} style={[styles.scheduleButton, {flexDirection: 'row', width: '100%', marginBottom: 2}]}>
+                        <Text style={{color: 'white'}}>{time}</Text>
+                        <TouchableOpacity onPress={() => handleRemoveWaterTime(index)}>
+                          <Text style={{fontSize: 24, color: 'white', fontWeight: 'bold', marginHorizontal: 10}}>-</Text>
+                        </TouchableOpacity>
+                      </TouchableOpacity>
+                  ))
+                ): <View />}
+
+                <TouchableOpacity
+                  style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButton, {width: '100%'}]}
+                  onPress={() => setShowWaterTimePicker(true)}
+                  disabled = {!toggleScheduling}
+                >
+                  <Text style={{color: 'white', fontWeight: 'bold', paddingHorizontal: 35}}>+</Text>
+                </TouchableOpacity>
+              </View>
+              <TimerPickerModal
                 visible={showWaterTimePicker}
                 setIsVisible={setShowWaterTimePicker}
                 onConfirm={(pickedDuration) => {
-                  //setWaterRefillTimes(formatTime(pickedDuration));
+                  handleAddWaterTime(pickedDuration);
                   setShowWaterTimePicker(false);
                 }}
                 hideSeconds
-                modalTitle="Set Time"
-                onCancel={() => setShowWaterTimePicker(false)}
+                modalTitle="Set Water Refill Time"
+                onCancel = {() => setShowWaterTimePicker(false)}
                 closeOnOverlayPress
                 use12HourPicker
               />
             </View>
+            {/* Schedule Potty Refill */}
             <View style={styles.schedulingItem}>
-              <Text>Refill Potty</Text>
-              <TouchableOpacity 
-                style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButton]}
-                onPress={() => setShowPottyTimePicker(true)}
-                disabled={!toggleScheduling}
-              >
-                <Text style={{color: 'white'}}>
-                  {pottyRefillTimes}
-                </Text>
-              </TouchableOpacity>
-              <TimerPickerModal 
+              <Text style={[{color: toggleScheduling ? 'black' : '#555', justifyContent: 'center'}]}>Refill Potty</Text>
+              <View style={{flexDirection: 'column'}}>
+                {pottyRefillTimes.length > 0 ? (
+                  pottyRefillTimes.map((time, index) => (
+                      <TouchableOpacity key={index} style={[styles.scheduleButton, {flexDirection: 'row', width: '100%', marginBottom: 2}]}>
+                        <Text style={{color: 'white'}}>{time}</Text>
+                        <TouchableOpacity onPress={() => handleRemovePottyTime(index)}>
+                          <Text style={{fontSize: 24, color: 'white', fontWeight: 'bold', marginHorizontal: 10}}>-</Text>
+                        </TouchableOpacity>
+                      </TouchableOpacity>
+                  ))
+                ): <View />}
+
+                <TouchableOpacity
+                  style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButton, {width: '100%'}]}
+                  onPress={() => setShowPottyTimePicker(true)}
+                  disabled = {!toggleScheduling}
+                >
+                  <Text style={{color: 'white', fontWeight: 'bold', paddingHorizontal: 35}}>+</Text>
+                </TouchableOpacity>
+              </View>
+              <TimerPickerModal
                 visible={showPottyTimePicker}
                 setIsVisible={setShowPottyTimePicker}
                 onConfirm={(pickedDuration) => {
-                  //setPottyRefillTimes(formatTime(pickedDuration));
+                  handleAddPottyTime(pickedDuration);
                   setShowPottyTimePicker(false);
                 }}
                 hideSeconds
-                modalTitle="Set Time"
-                onCancel={() => setShowPottyTimePicker(false)}
+                modalTitle="Set Potty Refill Time"
+                onCancel = {() => setShowPottyTimePicker(false)}
                 closeOnOverlayPress
                 use12HourPicker
               />
