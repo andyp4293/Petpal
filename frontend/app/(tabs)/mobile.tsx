@@ -6,9 +6,12 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
+
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons"; 
 import LiveCameraFeed from "../components/LiveCameraFeed";
+import { useIsFocused } from "@react-navigation/native";
+
 
 
 // mock data for pet status
@@ -70,13 +73,15 @@ const StatusCard = ({ title, value, icon }: StatusCardProps) => {
 };
 
 export default function TabMobileScreen(): JSX.Element {
-
+  const isFocused = useIsFocused();
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.sectionTitle}>Live Camera Feed</Text>
       <View style={styles.statusGrid}>
-        <LiveCameraFeed uri="http://192.168.137.178:81/stream"/> 
+        {isFocused && (
+            <LiveCameraFeed uri="http://192.168.137.178:81/stream" />
+          )}
       </View>
 
       {/* Recent Logs */}
