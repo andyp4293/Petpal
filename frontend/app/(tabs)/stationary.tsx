@@ -17,7 +17,7 @@ import { TimerPickerModal } from "react-native-timer-picker"
 
 const RASPBERRY_PI_IP = "192.168.48.240";
 
-const triggerMotor = async (type: "water" | "food") => {
+const triggerMotor = async (type: "water" | "food" | "potty") => {
   await set(ref(db, "users/default/commands"), {
     motor_command: type.toUpperCase(),
   })
@@ -260,6 +260,9 @@ export default function TabStationaryScreen(): JSX.Element {
         <TouchableOpacity style={styles.button} onPress={() => triggerMotor("food")}>
           <Text style={styles.buttonText}>Refill Food</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => triggerMotor("potty")}>
+          <Text style={styles.buttonText}>Refill Potty</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Recent Logs */}
@@ -481,9 +484,9 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: "#1e3504",
-    padding: 15,
+    padding: 20,
     borderRadius: 5,
-    width: "48%",
+    width: "auto",
     alignItems: "center",
   },
   buttonText: {
