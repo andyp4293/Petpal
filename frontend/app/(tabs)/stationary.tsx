@@ -153,7 +153,6 @@ export default function TabStationaryScreen(): JSX.Element {
       
               if(snapshot.exists()){
                 const data = snapshot.val();
-                console.log(data);
                 
                 if(typeof data === "object" && data.water_level ){
                   setWater(String(data.water_level));
@@ -175,9 +174,6 @@ export default function TabStationaryScreen(): JSX.Element {
                 else{
                   setPotty("N/A");
                 }
-              }
-              else{
-                console.log('No data found');
               }
             }
             catch(error){

@@ -1,42 +1,34 @@
-import React  from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
-  Dimensions,
   ScrollView,
-
+  Platform,
 } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons"; 
+import TcpSocket from "react-native-tcp-socket";
 import LiveCameraFeed from "../components/LiveCameraFeed";
+import Joystick from "../components/Joystick";
 import { useIsFocused } from "@react-navigation/native";
 
-
-
-// mock data for pet status
-const petStatus = {
-  potty: "55%", // logging potty capacity
-  food: "20%", // logging food level
-  water: "90%", // logging water levels
-  timeLastPlay: "3 hour ago", // logs the time since pet got activity
-};
-
-// Recent logs data
 const recentLogs = [
   { id: "1", type: "Feeding", details: "12:30 PM - 1 cup of kibble" },
   { id: "2", type: "Exercise", details: "10:00 AM - 20 mins" },
 ];
 
-// Notifications data
 const notifications = [
   { id: "1", type: "Potty", message: "11:24 AM - Pet used potty" },
   { id: "3", type: "Connectivity", message: "Device offline - check connection" },
 ];
 
-type LogItemProps = { id: string; type: string; details?: string; message?: string };
+type LogItemProps = {
+  id: string;
+  type: string;
+  details?: string;
+  message?: string;
+};
 
-// reusable list item for logs & notifications
 const ListItem = ({ type, details, message }: LogItemProps) => (
   <View style={styles.listItem}>
     <Text style={styles.itemType}>{type}</Text>
@@ -44,45 +36,101 @@ const ListItem = ({ type, details, message }: LogItemProps) => (
   </View>
 );
 
-type StatusCardProps = {
-  title: string;
-  value: number | string;
-  icon: string;
-};
-
-
-
-const StatusCard = ({ title, value, icon }: StatusCardProps) => {
-  // Get screen width (or container width if known)
-  const containerWidth = Dimensions.get('window').width * 0.8; // Assuming 80% of screen width
-  const numericValue = typeof value === 'number' ? value : parseFloat(value);
-  const progressBarWidth = (numericValue / 100) * containerWidth; // Convert percentage to pixels
-
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <FontAwesome5 name={icon} size={18} color="#1e3504" />
-      </View>
-      <View style={styles.progressBarContainer}>
-        <View style={[styles.progressBar, { width: progressBarWidth }]} />
-      </View>
-      <Text style={styles.cardValue}>{`${numericValue}%`}</Text>
-    </View>
-  );
-};
-
 export default function TabMobileScreen(): JSX.Element {
   const isFocused = useIsFocused();
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [socket, setSocket] = useState<any>(null);
+  const [connectionStatus, setConnectionStatus] = useState<string>("disconnected");
+
+  const connectToRobotTCP = () => {
+    const options = {
+      port: 100, // Make sure this matches the port used in your ESP32 code.
+      host: "192.168.137.178", // Use your ESP32's IP address.
+      tls: false,
+      // Optional: you can set a connection timeout and other options here.
+    };
+
+    // Create a TCP socket connection.
+    const client = TcpSocket.createConnection(options, () => {
+      console.log("[TCP] Connected to robot");
+      setConnectionStatus("client connected");
+    });
+
+    client.on("data", (data: any) => {
+      console.log("[TCP] Received data:", data.toString());
+      // Process incoming data as needed.
+    });
+
+    client.on("error", (error: any) => {
+      console.log("[TCP] Error:", error);
+      setConnectionStatus("error");
+    });
+
+    client.on("close", () => {
+      console.log("[TCP] Connection closed");
+      setConnectionStatus("disconnected");
+      // Optionally, attempt to reconnect after a delay:
+      setTimeout(connectToRobotTCP, 3000);
+    });
+
+    setSocket(client);
+  };
+
+  useEffect(() => {
+    connectToRobotTCP();
+    return () => {
+      if (socket) {
+        socket.destroy();
+      }
+    };
+  }, []);
+
+  // Optional: Send a heartbeat message periodically.
+  useEffect(() => {
+    if (!socket) return;
+    const heartbeatInterval = setInterval(() => {
+      if (socket && socket.destroyed === false) {
+        socket.write("{Heartbeat}");
+      }
+    }, 1000); // Send every 1 second.
+    return () => clearInterval(heartbeatInterval);
+  }, [socket]);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} scrollEnabled={scrollEnabled}>
       <Text style={styles.sectionTitle}>Live Camera Feed</Text>
       <View style={styles.statusGrid}>
-        {isFocused && (
-            <LiveCameraFeed uri="http://192.168.137.178:81/stream" />
-          )}
+        {isFocused && <LiveCameraFeed uri="http://192.168.137.178:81/stream" />}
       </View>
+
+      <Joystick
+        onStart={() => setScrollEnabled(false)}
+        onMove={(direction, speed) => {
+          if (socket && socket.destroyed === false) {
+            const command = JSON.stringify({
+              command: "move",
+              direction,
+              speed,
+            });
+            socket.write(command);
+          } else {
+            console.warn("Cannot send command: TCP socket not connected");
+          }
+        }}
+        onEnd={() => {
+          setScrollEnabled(true);
+          if (socket && socket.destroyed === false) {
+            const command = JSON.stringify({
+              command: "stop",
+              direction: 9, // '9' indicates stop per your logic.
+              speed: 0,
+            });
+            socket.write(command);
+          } else {
+            console.warn("Cannot send stop command: TCP socket not connected");
+          }
+        }}
+      />
 
       {/* Recent Logs */}
       <View style={styles.logsContainer}>
@@ -105,11 +153,15 @@ export default function TabMobileScreen(): JSX.Element {
           scrollEnabled={false}
         />
       </View>
+
+      {/* Display the connection status */}
+      <View style={styles.connectionStatusContainer}>
+        <Text style={styles.connectionStatusText}>{connectionStatus}</Text>
+      </View>
     </ScrollView>
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -124,50 +176,6 @@ const styles = StyleSheet.create({
   },
   statusGrid: {
     marginBottom: 20,
-  },
-  card: {
-    backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginRight: 8,
-    color: "#1e3504",
-  },
-  cardValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  progressBarContainer: {
-    width: "100%",
-    height: 6,
-    backgroundColor: "#ddd",
-    borderRadius: 3,
-    marginVertical: 5,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: "#1e3504",
-    borderRadius: 3,
-  },
-  timeValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  timeLabel: {
-    fontSize: 14,
-    color: "#555",
   },
   logsContainer: {
     marginBottom: 20,
@@ -188,5 +196,12 @@ const styles = StyleSheet.create({
   itemText: {
     color: "#555",
   },
+  connectionStatusContainer: {
+    padding: 10,
+    alignItems: "center",
+  },
+  connectionStatusText: {
+    fontSize: 16,
+    color: "#007AFF",
+  },
 });
-
