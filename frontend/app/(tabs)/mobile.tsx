@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
   ScrollView,
-  Platform,
 } from "react-native";
-import TcpSocket from "react-native-tcp-socket";
 import LiveCameraFeed from "../components/LiveCameraFeed";
 import Joystick from "../components/Joystick";
 import { useIsFocused } from "@react-navigation/native";
@@ -39,62 +37,70 @@ const ListItem = ({ type, details, message }: LogItemProps) => (
 export default function TabMobileScreen(): JSX.Element {
   const isFocused = useIsFocused();
   const [scrollEnabled, setScrollEnabled] = useState(true);
-  const [socket, setSocket] = useState<any>(null);
   const [connectionStatus, setConnectionStatus] = useState<string>("disconnected");
 
-  const connectToRobotTCP = () => {
-    const options = {
-      port: 100, // Make sure this matches the port used in your ESP32 code.
-      host: "192.168.137.178", // Use your ESP32's IP address.
-      tls: false,
-      // Optional: you can set a connection timeout and other options here.
-    };
+  // Use a ref to store the active WebSocket so we always reference the latest one.
+  const socketRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Create a TCP socket connection.
-    const client = TcpSocket.createConnection(options, () => {
-      console.log("[TCP] Connected to robot");
+  const socketUrl = "ws://192.168.137.178:100/ws"; // adjust as needed
+
+  // Function to create a new WebSocket connection.
+  const connectWebSocket = useCallback(() => {
+    console.log("Attempting to connect to", socketUrl);
+    const socket = new WebSocket(socketUrl);
+
+    socket.onopen = () => {
+      console.log("WebSocket connected");
       setConnectionStatus("client connected");
-    });
+      socketRef.current = socket;
+    };
 
-    client.on("data", (data: any) => {
-      console.log("[TCP] Received data:", data.toString());
-      // Process incoming data as needed.
-    });
+    socket.onmessage = (event) => {
+      console.log("Message received:", event.data);
+      // Process incoming messages as needed.
+    };
 
-    client.on("error", (error: any) => {
-      console.log("[TCP] Error:", error);
+    socket.onerror = (error) => {
+      console.log("WebSocket error:", error);
       setConnectionStatus("error");
-    });
+    };
 
-    client.on("close", () => {
-      console.log("[TCP] Connection closed");
+    socket.onclose = () => {
+      console.log("WebSocket disconnected");
       setConnectionStatus("disconnected");
-      // Optionally, attempt to reconnect after a delay:
-      setTimeout(connectToRobotTCP, 3000);
-    });
-
-    setSocket(client);
-  };
-
-  useEffect(() => {
-    connectToRobotTCP();
-    return () => {
-      if (socket) {
-        socket.destroy();
+      socketRef.current = null;
+      // Attempt to reconnect after 3 seconds.
+      if (!reconnectTimeoutRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectWebSocket();
+          reconnectTimeoutRef.current = null;
+        }, 3000);
       }
     };
-  }, []);
+  }, [socketUrl]);
 
-  // Optional: Send a heartbeat message periodically.
   useEffect(() => {
-    if (!socket) return;
-    const heartbeatInterval = setInterval(() => {
-      if (socket && socket.destroyed === false) {
-        socket.write("{Heartbeat}");
+    connectWebSocket();
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close();
       }
-    }, 1000); // Send every 1 second.
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, [connectWebSocket]);
+
+  // Heartbeat to keep connection alive.
+  useEffect(() => {
+    const heartbeatInterval = setInterval(() => {
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({ alive: true }));
+      }
+    }, 1000);
     return () => clearInterval(heartbeatInterval);
-  }, [socket]);
+  }, []);
 
   return (
     <ScrollView style={styles.container} scrollEnabled={scrollEnabled}>
@@ -106,28 +112,30 @@ export default function TabMobileScreen(): JSX.Element {
       <Joystick
         onStart={() => setScrollEnabled(false)}
         onMove={(direction, speed) => {
-          if (socket && socket.destroyed === false) {
+          if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            // Send a movement command in the expected format.
             const command = JSON.stringify({
-              command: "move",
-              direction,
-              speed,
+              N: 102,
+              D1: direction,
+              D2: speed,
             });
-            socket.write(command);
+            socketRef.current.send(command);
           } else {
-            console.warn("Cannot send command: TCP socket not connected");
+            console.warn("Cannot send command: WebSocket not connected");
           }
         }}
         onEnd={() => {
           setScrollEnabled(true);
-          if (socket && socket.destroyed === false) {
+          if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            // Send a stop command in the expected format.
             const command = JSON.stringify({
-              command: "stop",
-              direction: 9, // '9' indicates stop per your logic.
-              speed: 0,
+              N: 102,
+              D1: 9,  // '9' means stop per your logic.
+              D2: 0,
             });
-            socket.write(command);
+            socketRef.current.send(command);
           } else {
-            console.warn("Cannot send stop command: TCP socket not connected");
+            console.warn("Cannot send stop command: WebSocket not connected");
           }
         }}
       />
@@ -154,7 +162,7 @@ export default function TabMobileScreen(): JSX.Element {
         />
       </View>
 
-      {/* Display the connection status */}
+      {/* Display connection status */}
       <View style={styles.connectionStatusContainer}>
         <Text style={styles.connectionStatusText}>{connectionStatus}</Text>
       </View>
