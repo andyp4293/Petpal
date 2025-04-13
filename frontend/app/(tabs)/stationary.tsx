@@ -95,11 +95,21 @@ export default function TabStationaryScreen(): JSX.Element {
   const [showFoodTimePicker, setShowFoodTimePicker] = useState<boolean>(false);
   const [showWaterTimePicker, setShowWaterTimePicker] = useState<boolean>(false);
   const [showPottyTimePicker, setShowPottyTimePicker] = useState<boolean>(false);
-  const [waterRefillTime, setWaterRefillTime] = useState<string>("");
-  const [foodRefillTime, setFoodRefillTime] = useState<string>("");
-  const [pottyRefillTime, setPottyRefillTime] = useState<string>("");
+  const [waterRefillTimes, setWaterRefillTimes] = useState<string[]>([]);
+  const [foodRefillTimes, setFoodRefillTimes] = useState<string[]>([]);
+  const [pottyRefillTimes, setPottyRefillTimes] = useState<string[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
  
   const toggleSchedulingSwitch = () => setToggleScheduling(previousState => !previousState);
+
+  const handleAddFoodTime = (pickedDuration: {hours?: number; minutes?: number}) => {
+    const formattedTime = formatTime(pickedDuration);
+    setFoodRefillTimes(prevTimes => [...prevTimes, formattedTime]);
+  }
+
+  const handleRemoveFoodTime = (index: number) => {
+    setFoodRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
+  }
 
   const formatTime = ({
     hours,
@@ -134,18 +144,30 @@ export default function TabStationaryScreen(): JSX.Element {
     </View>
   );
 
-  // const sendRequest = async (motorType: String) => {
-  //   try {
-  //     const response = await axios.post(`${RASPBERRY_PI_IP}/activate`, {
-  //       motor: motorType,
-  //     });
-  //     console.log(response.data.message);
-  //   } catch(error) {
-  //     console.log("FAILURE:", error);
-  //   }
-  // }
+  useEffect(() => {
+    const sendSchedulingToDatabase = async () => {
+      const scheduleRef = ref(db, "users/default/scheduling");
+      const schedulingData = {
+        toggleScheduling,
+        foodRefillTimes,
+        waterRefillTimes,
+        pottyRefillTimes,
+      };
+      try {
+        await set(scheduleRef, schedulingData);
+        console.log("Scheduling data sent!", schedulingData);
+      } catch (error) {
+        console.log("Error sending scheduling data", error);
+      }
+    };
+    if(!isInitialLoad){
+      sendSchedulingToDatabase();
+    }
+  }, [foodRefillTimes, waterRefillTimes, pottyRefillTimes, isInitialLoad, toggleScheduling]);
 
   useEffect(() => {
+          const scheduleRef = ref(db, "users/default/scheduling");
+
           const fetchPetStatuses = async () => {
             try {
               const userRef = ref(db, 'users/default/PetStatus');
@@ -179,8 +201,24 @@ export default function TabStationaryScreen(): JSX.Element {
             catch(error){
               console.error(error)
             }
+            setIsInitialLoad(false);
           };
-      
+
+          const fetchSchedulingData = async () => {
+            try{
+              const snapshot = await get(scheduleRef);
+              if(snapshot.exists()){
+                const data = snapshot.val();
+                setFoodRefillTimes(data.foodRefillTimes || [])
+                console.log("Retrieved data:", data);
+              } else {
+                console.log("No data found");
+              }
+            } catch(error) {
+              console.log("Error:", error);
+            }
+          }
+          fetchSchedulingData();
           fetchPetStatuses();
         }, []);
   
@@ -227,9 +265,52 @@ export default function TabStationaryScreen(): JSX.Element {
         <View style={[styles.card, !toggleScheduling && styles.disabledCard]}>
           <View style={styles.schedulingParameters}>
             <View style={styles.schedulingItem}>
-              <Text>Refill Food</Text>
+              <Text style={[{color: toggleScheduling ? 'black' : '#555', justifyContent: 'center'}]}>Refill Food</Text>
+              <View style={{flexDirection: 'column'}}>
+                {foodRefillTimes.length > 0 ? (
+                  foodRefillTimes.map((time, index) => (
+                      <TouchableOpacity key={index} style={[styles.scheduleButton, {flexDirection: 'row', width: '100%', marginBottom: 2}]}>
+                        <Text style={{color: 'white'}}>{time}</Text>
+                        <TouchableOpacity onPress={() => handleRemoveFoodTime(index)}>
+                          <Text style={{fontSize: 24, color: 'white', fontWeight: 'bold', marginHorizontal: 10}}>-</Text>
+                        </TouchableOpacity>
+                      </TouchableOpacity>
+
+                    // <View key={index} style={styles.scheduleButton}>
+                    //   <Text style={{color: 'white', marginRight: 8}}>{time}</Text>
+                    //   <TouchableOpacity onPress={() => handleRemoveFoodTime(index)} style={styles.scheduleButton}>
+                    //     <Text style={{color: 'white', fontWeight: 'bold'}}>----</Text>
+                    //   </TouchableOpacity>
+                    // </View>
+                  ))
+                ): <View />}
+
+                <TouchableOpacity
+                  style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButton, {width: '100%'}]}
+                  onPress={() => setShowFoodTimePicker(true)}
+                  disabled = {!toggleScheduling}
+                >
+                  <Text style={{color: 'white', fontWeight: 'bold', paddingHorizontal: 35}}>+</Text>
+                </TouchableOpacity>
+              </View>
+              <TimerPickerModal
+                visible={showFoodTimePicker}
+                setIsVisible={setShowFoodTimePicker}
+                onConfirm={(pickedDuration) => {
+                  handleAddFoodTime(pickedDuration);
+                  setShowFoodTimePicker(false);
+                }}
+                hideSeconds
+                modalTitle="Set Food Refill Time"
+                onCancel = {() => setShowFoodTimePicker(false)}
+                closeOnOverlayPress
+                use12HourPicker
+              />
+            </View>
+            {/* <View style={styles.schedulingItem}>
+              <Text style={[{color: 'black'}, !toggleScheduling && styles.disabledScheduleText]}>Refill Food</Text>
               <TouchableOpacity 
-                style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButtom]}
+                style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButton]}
                 onPress={() => setShowFoodTimePicker(true)}
                 disabled={!toggleScheduling}
               >
@@ -250,23 +331,23 @@ export default function TabStationaryScreen(): JSX.Element {
                 closeOnOverlayPress
                 use12HourPicker
               />
-            </View>
+            </View> */}
             <View style={styles.schedulingItem}>
               <Text>Refill Water</Text>
               <TouchableOpacity 
-                style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButtom]}
+                style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButton]}
                 onPress={() => setShowWaterTimePicker(true)}
                 disabled={!toggleScheduling}
               >
                 <Text style={{color: 'white'}}>
-                  {waterRefillTime}
+                  {waterRefillTimes}
                 </Text>
               </TouchableOpacity>
               <TimerPickerModal 
                 visible={showWaterTimePicker}
                 setIsVisible={setShowWaterTimePicker}
                 onConfirm={(pickedDuration) => {
-                  setWaterRefillTime(formatTime(pickedDuration));
+                  //setWaterRefillTimes(formatTime(pickedDuration));
                   setShowWaterTimePicker(false);
                 }}
                 hideSeconds
@@ -279,19 +360,19 @@ export default function TabStationaryScreen(): JSX.Element {
             <View style={styles.schedulingItem}>
               <Text>Refill Potty</Text>
               <TouchableOpacity 
-                style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButtom]}
+                style={[styles.scheduleButton, !toggleScheduling && styles.disabledScheduleButton]}
                 onPress={() => setShowPottyTimePicker(true)}
                 disabled={!toggleScheduling}
               >
                 <Text style={{color: 'white'}}>
-                  {pottyRefillTime}
+                  {pottyRefillTimes}
                 </Text>
               </TouchableOpacity>
               <TimerPickerModal 
                 visible={showPottyTimePicker}
                 setIsVisible={setShowPottyTimePicker}
                 onConfirm={(pickedDuration) => {
-                  setPottyRefillTime(formatTime(pickedDuration));
+                  //setPottyRefillTimes(formatTime(pickedDuration));
                   setShowPottyTimePicker(false);
                 }}
                 hideSeconds
@@ -309,7 +390,10 @@ export default function TabStationaryScreen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  disabledScheduleButtom: {
+  disabledScheduleText: {
+    color: '#555'
+  },
+  disabledScheduleButton: {
     backgroundColor: "#ccc",
     padding: 5,
     borderRadius: 5,
@@ -317,6 +401,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   scheduleButton: {
+    color: 'white',
     backgroundColor: "#1e3504",
     padding: 5,
     borderRadius: 5,
@@ -330,9 +415,8 @@ const styles = StyleSheet.create({
   schedulingItem: {
     width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10
+    marginBottom: 10,
+    justifyContent: 'space-between'
   },
   container: {
     flex: 1,
