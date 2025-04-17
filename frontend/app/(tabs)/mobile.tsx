@@ -37,13 +37,16 @@ const ListItem = ({ type, details, message }: LogItemProps) => (
 export default function TabMobileScreen(): JSX.Element {
   const isFocused = useIsFocused();
   const [scrollEnabled, setScrollEnabled] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<string>("disconnected");
+  const [connectionStatus, setConnectionStatus] = useState<string>("Robot not connected");
 
-  // Use a ref to store the active WebSocket so we always reference the latest one.
+  // const ipAddress = "192.168.4.1"; // use this for when we connect directly to robot
+  const ipAddress = "192.168.137.213" // use this for when we use the hotspot
+
+
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const socketUrl = "ws://192.168.137.178:100/ws"; // adjust as needed
+  const socketUrl = `ws://${ipAddress}:100/ws`; // adjust as needed
 
   // Function to create a new WebSocket connection.
   const connectWebSocket = useCallback(() => {
@@ -52,13 +55,12 @@ export default function TabMobileScreen(): JSX.Element {
 
     socket.onopen = () => {
       console.log("WebSocket connected");
-      setConnectionStatus("client connected");
+      setConnectionStatus("Robot connected");
       socketRef.current = socket;
     };
 
     socket.onmessage = (event) => {
       console.log("Message received:", event.data);
-      // Process incoming messages as needed.
     };
 
     socket.onerror = (error) => {
@@ -68,9 +70,9 @@ export default function TabMobileScreen(): JSX.Element {
 
     socket.onclose = () => {
       console.log("WebSocket disconnected");
-      setConnectionStatus("disconnected");
+      setConnectionStatus("Robot not connected");
       socketRef.current = null;
-      // Attempt to reconnect after 3 seconds.
+      // reconnect after 3 seconds
       if (!reconnectTimeoutRef.current) {
         reconnectTimeoutRef.current = setTimeout(() => {
           connectWebSocket();
@@ -104,9 +106,29 @@ export default function TabMobileScreen(): JSX.Element {
 
   return (
     <ScrollView style={styles.container} scrollEnabled={scrollEnabled}>
-      <Text style={styles.sectionTitle}>Live Camera Feed</Text>
+
+
+      <View style={styles.headerRow}>
+        <Text style={styles.sectionTitle}>Live Camera Feed</Text>
+        <Text
+          style={[
+            styles.connectionStatusText,
+            {
+              color:
+                connectionStatus === 'Robot connected'
+                  ? '#28a745'
+                  : connectionStatus === 'Robot not connected'
+                  ? '#dc3545'
+                  : '#007AFF',
+            },
+          ]}
+        >
+          {connectionStatus}
+        </Text>
+
+      </View>
       <View style={styles.statusGrid}>
-        {isFocused && <LiveCameraFeed uri="http://192.168.137.178:81/stream" />}
+        {isFocused && <LiveCameraFeed uri= {`http://${ipAddress}:81/stream`} />}
       </View>
 
       <Joystick
@@ -162,10 +184,6 @@ export default function TabMobileScreen(): JSX.Element {
         />
       </View>
 
-      {/* Display connection status */}
-      <View style={styles.connectionStatusContainer}>
-        <Text style={styles.connectionStatusText}>{connectionStatus}</Text>
-      </View>
     </ScrollView>
   );
 }
@@ -210,6 +228,11 @@ const styles = StyleSheet.create({
   },
   connectionStatusText: {
     fontSize: 16,
-    color: "#007AFF",
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
   },
 });

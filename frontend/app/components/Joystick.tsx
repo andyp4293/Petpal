@@ -19,6 +19,7 @@ export default function Joystick({ onMove, onEnd, onStart }: JoystickProps) {
   const centerY = 75;
   const radius = 60;
   const position = useRef(new Animated.ValueXY({ x: centerX, y: centerY })).current;
+  const lastSent = useRef(Date.now());
 
   const panResponder = useRef(
     PanResponder.create({
@@ -36,8 +37,12 @@ export default function Joystick({ onMove, onEnd, onStart }: JoystickProps) {
         const y = centerY + distance * Math.sin(angle);
         position.setValue({ x, y });
 
-        // Map angle to a direction value. (Adjust mapping as needed)
-        let direction = 9; // default: stop
+        if (distance < 10) return; // ignore small jitters
+        const now = Date.now();
+        if (now - lastSent.current < 60) return; // throttle frequency
+        lastSent.current = now;
+
+        let direction = 9; // stop by default
         const deg = (angle * 180) / Math.PI;
         if (deg > -22.5 && deg <= 22.5) direction = 4;
         else if (deg > 22.5 && deg <= 67.5) direction = 8;
@@ -48,19 +53,18 @@ export default function Joystick({ onMove, onEnd, onStart }: JoystickProps) {
         else if (deg > -112.5 && deg <= -67.5) direction = 1;
         else if (deg > -67.5 && deg <= -22.5) direction = 7;
 
-        // Speed is proportional to the distance from the center, capped to 255.
-        const speed = Math.floor((distance / radius) * 255);
+        const MAX_SPEED = 100;
 
-        // Call the onMove callback provided by the parent (which can send commands via WebSocket)
+        const rawSpeed = (distance / radius) * 255;
+        const speed = Math.min(Math.floor(rawSpeed), MAX_SPEED);
         onMove(direction, speed);
+
       },
       onPanResponderRelease: () => {
-        // Animate the thumb back to center
         Animated.spring(position, {
           toValue: { x: centerX, y: centerY },
           useNativeDriver: false,
         }).start();
-        // Call onEnd to indicate joystick release (e.g., to send a stop command)
         onEnd();
       },
     })
