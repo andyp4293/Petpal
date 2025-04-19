@@ -20,6 +20,26 @@ async def find_arduino_ports():
         sys.exit(1)
     return ports  # Returning the list of ports
 
+# Define a protocol for serial communication
+class ArduinoProtocol(asyncio.Protocol):
+    def __init__(self):
+        self.transport = None
+
+    def connection_made(self, transport):
+        self.transport = transport
+        print("Connection established with Arduino")
+
+    def data_received(self, data):
+        print(f"Data received: {data.decode()}")
+
+    def connection_lost(self, exc):
+        print("Connection lost with Arduino")
+
+    def write(self, data):
+        if self.transport:
+            self.transport.write(data)
+            print(f"Sent data: {data.decode()}")
+
 # Async function to handle the command
 async def handle_command(event):
     print("Hello")
@@ -94,7 +114,8 @@ async def init_arduino():
         sys.exit(1)  # Exit if no ports are found
     port = ports[0]  # Ensure it's a string, i.e., first port in the list
     global arduino
-    arduino = await serial_asyncio.create_serial_connection(None, port, baudrate=9600)
+    # Pass the ArduinoProtocol as the first argument
+    arduino = await serial_asyncio.create_serial_connection(lambda: ArduinoProtocol(), port, baudrate=9600)
     print(f"Arduino connected on {port}")
 
 # Async function to run the listener and scheduling checks
