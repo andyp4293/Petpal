@@ -6,6 +6,7 @@ import glob
 import sys
 import datetime
 import threading
+from serial.tools import list_ports  # Added for robust port detection
 
 # Initialize Firebase
 cred = credentials.Certificate("../Downloads/petpal-17cc8-firebase-adminsdk-fbsvc-ba3cc64679.json")
@@ -15,48 +16,78 @@ firebase_admin.initialize_app(cred, {
 
 # Arduino connection setup
 def find_arduino_ports():
-    ports = glob.glob('/dev/ttyACM*')
-    print(ports)
-    if not ports:
-        print("No Arduino port found")
-        sys.exit(1)
-    return ports[0]
+    """Find all Arduino-compatible ports using vendor/product ID"""
+    arduino_ports = []
+    for port in list_ports.comports():
+        if port.vid == 0x2341 and port.pid == 0x0043:  # Common Arduino Uno IDs
+            arduino_ports.append(port.device)
+    if not arduino_ports:
+        print("No Arduino found")
+        return None
+    return arduino_ports[0]
 
-port = find_arduino_ports()
 arduino = None
 serial_lock = threading.Lock()
+connection_attempts = 0
 
 def reconnect_arduino():
-    global arduino, port
+    global arduino, connection_attempts
     try:
         if arduino and arduino.is_open:
             arduino.close()
-    except:
-        pass
-    try:
-        arduino = serial.Serial(port, 9600)
-        time.sleep(2)  # Allow time for Arduino reset
-        print("Successfully reconnected to Arduino")
     except Exception as e:
-        print(f"Arduino reconnection failed: {e}")
+        print(f"Error closing port: {e}")
+    
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            port = find_arduino_ports()
+            if not port:
+                print("Arduino not detected")
+                time.sleep(2 ** attempt)  # Exponential backoff
+                continue
+                
+            arduino = serial.Serial(port, 9600, timeout=1)
+            time.sleep(2 + attempt)  # Longer wait after reset
+            arduino.reset_input_buffer()
+            arduino.reset_output_buffer()
+            print(f"Connected to {port}")
+            connection_attempts = 0
+            return True
+        except Exception as e:
+            print(f"Connection attempt {attempt+1} failed: {e}")
+            time.sleep(1)
+    
+    print("Max reconnection attempts reached")
+    return False
 
-reconnect_arduino()  # Initial connection
+# Initial connection
+if not reconnect_arduino():
+    sys.exit(1)
 
-# Thread-safe serial writing with error recovery
+# Thread-safe serial writing with advanced recovery
 def safe_serial_write(command):
-    global arduino
+    global arduino, connection_attempts
     try:
         with serial_lock:
             if not arduino or not arduino.is_open:
-                reconnect_arduino()
+                if not reconnect_arduino():
+                    return False
+            
             arduino.write(command)
-            arduino.flush()  # Force immediate send
-            print(f"Sent command: {command.decode().strip()}")
+            arduino.flush()
+            print(f"Sent: {command.decode().strip()}")
+            return True
+            
     except Exception as e:
-        print(f"Serial write error: {e}")
-        reconnect_arduino()
+        print(f"Write failed: {e}")
+        connection_attempts += 1
+        if connection_attempts >= 3:
+            print("Critical connection failure")
+            sys.exit(1)
+        return False
 
-# Firebase command handler
+# Firebase command handler (unchanged except for safe_serial_write calls)
 def handle_command(event):
     data = event.data
     if data == "WATER":
@@ -73,7 +104,7 @@ def handle_command(event):
 
     db.reference("users/default/commands/motor_command").set("")
 
-# Scheduling logic
+# Scheduling logic (unchanged except for safe_serial_write calls)
 def format_current_time():
     now = datetime.datetime.now()
     hour = now.hour
@@ -114,4 +145,4 @@ while True:
         print("Exiting...")
         break
     except Exception as e:
-        print(f"Critical error in scheduler: {e}")
+        print(f"Critical error: {e}")
