@@ -4,12 +4,12 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  Dimensions,
   ScrollView,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons"; 
 import { ref, get } from "firebase/database"
 import { db } from "../../firebaseConfig"
+import StatusCardComponent from "../components/StatusCardComponent";
 
 // mock data for pet status
 const petStatus = {
@@ -123,9 +123,7 @@ export default function TabHomeScreen(): JSX.Element {
       {/* Pet Status Overview */}
       <Text style={styles.sectionTitle}>PetPal Overview</Text>
       <View style={styles.statusGrid}>
-        <StatusCard title="Potty Capacity" value={`${potty_level}%`} icon="toilet" />
-        <StatusCard title="Water Level" value={`${water_level}%`} icon="tint" />
-        <StatusCard title="Food Level" value={`${food_level}%`} icon="pizza-slice" />
+              <StatusCardComponent water_level = {water_level} food_level = {food_level} potty_level = {potty_level} showReset = {false}/>
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Last Exercise</Text>

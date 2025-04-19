@@ -4,32 +4,17 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  Dimensions,
   ScrollView,
   TouchableOpacity,
-  Touchable,
   Switch
 } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons"; 
-import { ref, get, set } from "firebase/database"
+import { ref, get, set, update } from "firebase/database"
 import { db } from "../../firebaseConfig"
 import { TimerPickerModal } from "react-native-timer-picker"
+import StatusCardComponent from "../components/StatusCardComponent";
 
 const RASPBERRY_PI_IP = "192.168.48.240";
 
-const triggerMotor = async (type: "water" | "food" | "potty") => {
-  await set(ref(db, "users/default/commands"), {
-    motor_command: type.toUpperCase(),
-  })
-}
-
-// mock data for pet status
-const petStatus = {
-  potty: "55%", // logging potty capacity
-  food: "20%", // logging food level 
-  water: "90%", // logging water levels
-  timeLastPlay: "1 hour ago", // logs the time since pet got activity
-};
 
 const recentLogs = [
   {
@@ -58,73 +43,95 @@ const notifications = [
   },
 ];
 
-type StatusCardProps = {
-  title: string;
-  value: number | string;
-  icon: string;
-};
-
-const StatusCard = ({ title, value, icon }: StatusCardProps) => {
-  const [cardWidth, setCardWidth] = useState(0); 
 
 
-  const numericValue = typeof value === "number" ? value : parseFloat(value.toString().replace("%", ""));
-
-  const progressBarWidth = Math.min(cardWidth, Math.round((numericValue / 100) * cardWidth));
-
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <FontAwesome5 name={icon} size={18} color="#1e3504" />
-      </View>
-      <View style={styles.progressBarContainer} onLayout={(event) => setCardWidth(event.nativeEvent.layout.width)}>
-        <View style={[styles.progressBar, { width: progressBarWidth }]} />
-      </View>
-      <Text style={styles.cardValue}>{`${numericValue}%`}</Text>
-    </View>
-  );
-};
 
 export default function TabStationaryScreen(): JSX.Element {
-  const [water_level, setWater] = useState<string>("");
-  const [food_level, setFood] = useState<string>(""); 
-  const [potty_level, setPotty] = useState<string>(""); 
+  const [water_counter, setWater_counter] = useState<number>(NaN);
+  const [food_counter, setFood_counter] = useState<number>(NaN); 
+  const [potty_counter, setPotty_counter] = useState<number>(NaN); 
+  const [water_level, setWater_level] = useState<string>("0");
+  const [food_level, setFood_level] = useState<string>("0");
+  const [potty_level, setPotty_level] = useState<string>("0");
   const [toggleScheduling, setToggleScheduling] = useState<boolean>(false);
 
   const [showFoodTimePicker, setShowFoodTimePicker] = useState<boolean>(false);
   const [showWaterTimePicker, setShowWaterTimePicker] = useState<boolean>(false);
   const [showPottyTimePicker, setShowPottyTimePicker] = useState<boolean>(false);
-  const [waterRefillTimes, setWaterRefillTimes] = useState<string[]>([]);
-  const [foodRefillTimes, setFoodRefillTimes] = useState<string[]>([]);
-  const [pottyRefillTimes, setPottyRefillTimes] = useState<string[]>([]);
-  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
+  const [waterRefillTimes, setWater_counterRefillTimes] = useState<string[]>([]);
+  const [foodRefillTimes, setFood_counterRefillTimes] = useState<string[]>([]);
+  const [pottyRefillTimes, setPotty_counterRefillTimes] = useState<string[]>([]);
+
+  
+  const [isInitialLoad] = useState<boolean>(true);
+
+  const triggerMotor = async (type: "water" | "food" | "potty", counter: number) => {
+    await set(ref(db, "users/default/commands"), {
+      motor_command: type.toUpperCase(),
+    });
+    
+  
+  
+  
+    if (!Number.isNaN(counter) && counter >0){
+      const newCount = counter - 1;
+    
+      await update(ref(db, "users/default/PetStatus"), {
+        [`${type}_counter`]: newCount
+      });
+  
+      if (type === "water") {
+          setWater_counter(newCount);  // Update water_counter
+          const roundedValue = Math.ceil((newCount / 3) * 100); // Round up to nearest whole number
+          await update(ref(db, "users/default/PetStatus"), {
+            [`${type}_level`]: roundedValue.toString(), // Ensure it's a string
+          });
+        } else if (type === "food") {
+          setFood_counter(newCount);   // Update food_counter
+          const roundedValue = Math.ceil((newCount / 6) * 100); // Round up to nearest whole number
+          await update(ref(db, "users/default/PetStatus"), {
+            [`${type}_level`]: roundedValue.toString(), // Ensure it's a string
+          });
+        } else if (type === "potty") {
+          setPotty_counter(newCount);  // Update potty_counter
+          const roundedValue = Math.ceil((newCount / 5) * 100); // Round up to nearest whole number
+          await update(ref(db, "users/default/PetStatus"), {
+            [`${type}_level`]: roundedValue.toString(), // Ensure it's a string
+          });
+        }
+  
+      
+    }
+    
+  }
+  
+  
  
   const toggleSchedulingSwitch = () => setToggleScheduling(previousState => !previousState);
 
   const handleAddFoodTime = (pickedDuration: {hours?: number; minutes?: number}) => {
     const formattedTime = formatTime(pickedDuration);
-    setFoodRefillTimes(prevTimes => [...prevTimes, formattedTime]);
+    setFood_counterRefillTimes(prevTimes => [...prevTimes, formattedTime]);
   }
 
   const handleAddWaterTime = (pickedDuration: {hours?: number; minutes?: number}) => {
     const formattedTime = formatTime(pickedDuration);
-    setWaterRefillTimes(prevTimes => [...prevTimes, formattedTime]);
+    setWater_counterRefillTimes(prevTimes => [...prevTimes, formattedTime]);
   }
 
   const handleAddPottyTime = (pickedDuration: {hours?: number; minutes?: number}) => {
     const formattedTime = formatTime(pickedDuration);
-    setPottyRefillTimes(prevTimes => [...prevTimes, formattedTime]);
+    setPotty_counterRefillTimes(prevTimes => [...prevTimes, formattedTime]);
   }
 
   const handleRemoveFoodTime = (index: number) => {
-    setFoodRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
+    setFood_counterRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
   }
   const handleRemoveWaterTime = (index: number) => {
-    setWaterRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
+    setWater_counterRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
   }
   const handleRemovePottyTime = (index: number) => {
-    setPottyRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
+    setPotty_counterRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
   }
 
   const formatTime = ({
@@ -160,7 +167,7 @@ export default function TabStationaryScreen(): JSX.Element {
     </View>
   );
 
-  useEffect(() => {
+   useEffect(() => {
     const sendSchedulingToDatabase = async () => {
       const scheduleRef = ref(db, "users/default/scheduling");
       const schedulingData = {
@@ -183,7 +190,7 @@ export default function TabStationaryScreen(): JSX.Element {
 
   useEffect(() => {
           const scheduleRef = ref(db, "users/default/scheduling");
-
+          
           const fetchPetStatuses = async () => {
             try {
               const userRef = ref(db, 'users/default/PetStatus');
@@ -192,33 +199,74 @@ export default function TabStationaryScreen(): JSX.Element {
               if(snapshot.exists()){
                 const data = snapshot.val();
                 
+
                 if(typeof data === "object" && data.water_level ){
-                  setWater(String(data.water_level));
+                  setWater_level(data.water_level);
                 }
                 else{
-                  setWater("N/A");
+                  setWater_level("NaN");
                 }
-  
+
                 if(typeof data === "object" && data.food_level ){
-                  setFood(String(data.food_level));
+                  setFood_level(data.food_level);
                 }
                 else{
-                  setFood("N/A");
+                  setFood_level("NaN");
                 }
-  
+
                 if(typeof data === "object" && data.potty_level ){
-                  setPotty(String(data.potty_level));
+                  setPotty_level(data.potty_level);
                 }
                 else{
-                  setPotty("N/A");
+                  setPotty_level("NaN");
                 }
               }
             }
             catch(error){
               console.error(error)
             }
-            setIsInitialLoad(false);
           };
+
+          const fetchPetCounts = async () => {
+                    try {
+                      const userRef = ref(db, 'users/default/PetStatus');
+                      const snapshot = await get(userRef)
+              
+                      if(snapshot.exists()){
+                        const data = snapshot.val();
+                        console.log(data);
+                        
+                        if(typeof data === "object" && data.water_counter ){
+                          setWater_counter((data.water_counter));
+                        }
+                        else{
+                          setWater_counter(NaN);
+                        }
+          
+                        if(typeof data === "object" && data.food_counter ){
+                          setFood_counter((data.food_counter));
+                        }
+                        else{
+                          setFood_counter(NaN);
+                        }
+          
+                        if(typeof data === "object" && data.potty_counter ){
+                          setPotty_counter(data.potty_counter);
+                        }
+                        else{
+                          setPotty_counter(NaN);
+                        }
+                      }
+                      else{
+                        console.log('No data found');
+                      }
+                    }
+                    catch(error){
+                      console.error(error)
+                    }
+                  };
+
+
 
           const fetchSchedulingData = async () => {
             try{
@@ -226,9 +274,9 @@ export default function TabStationaryScreen(): JSX.Element {
               if(snapshot.exists()){
                 const data = snapshot.val();
                 setToggleScheduling(data.toggleScheduling)
-                setFoodRefillTimes(data.foodRefillTimes || [])
-                setWaterRefillTimes(data.waterRefillTimes || []);
-                setPottyRefillTimes(data.pottyRefillTimes || []);
+                setFood_counterRefillTimes(data.foodRefillTimes || [])
+                setWater_counterRefillTimes(data.waterRefillTimes || []);
+                setPotty_counterRefillTimes(data.pottyRefillTimes || []);
                 console.log("Retrieved data:", data);
               } else {
                 console.log("No data found");
@@ -237,30 +285,29 @@ export default function TabStationaryScreen(): JSX.Element {
               console.log("Error:", error);
             }
           }
-          fetchSchedulingData();
+
           fetchPetStatuses();
-        }, []);
+          fetchPetCounts();
+          fetchSchedulingData();
+        }, [water_counter, food_counter, potty_counter]);
   
 
   return (
     <ScrollView style={styles.container}>
       {/* Pet Status Overview */}
       <Text style={styles.sectionTitle}>PetPal Station Statuses</Text>
-      <View style={styles.statusGrid}>
-        <StatusCard title="Potty Capacity" value={`${potty_level}%`} icon="toilet" />
-        <StatusCard title="Water Level" value={`${water_level}%`} icon="tint" />
-        <StatusCard title="Food Level" value={`${food_level}%`} icon="pizza-slice" />
-      </View>
+
+      <StatusCardComponent water_level = {water_level} food_level = {food_level} potty_level = {potty_level} showReset = {true}/>
 
         {/* Refill Water and Food */}
       <View style={styles.refillButtonsContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => triggerMotor("water")}>
+        <TouchableOpacity style={styles.button} onPress={() => triggerMotor("water", water_counter)}>
           <Text style={styles.buttonText}>Refill Water</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => triggerMotor("food")}>
+        <TouchableOpacity style={styles.button} onPress={() => triggerMotor("food", food_counter)}>
           <Text style={styles.buttonText}>Refill Food</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => triggerMotor("potty")}>
+        <TouchableOpacity style={styles.button} onPress={() => triggerMotor("potty", potty_counter)}>
           <Text style={styles.buttonText}>Refill Potty</Text>
         </TouchableOpacity>
       </View>
