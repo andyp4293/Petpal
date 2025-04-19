@@ -5,99 +5,113 @@ from firebase_admin import credentials, db
 import glob
 import sys
 import datetime
-import threading  # Added import
+import threading
 
+# Initialize Firebase
 cred = credentials.Certificate("../Downloads/petpal-17cc8-firebase-adminsdk-fbsvc-ba3cc64679.json")
 firebase_admin.initialize_app(cred, {
     "databaseURL": "https://petpal-17cc8-default-rtdb.firebaseio.com/"
 })
 
+# Arduino connection setup
 def find_arduino_ports():
     ports = glob.glob('/dev/ttyACM*')
     print(ports)
     if not ports:
-        print("no port found")
+        print("No Arduino port found")
         sys.exit(1)
     return ports[0]
 
 port = find_arduino_ports()
-arduino = serial.Serial(port, 9600)
-time.sleep(2)
-
-# Create a lock for serial writes
+arduino = None
 serial_lock = threading.Lock()
 
+def reconnect_arduino():
+    global arduino, port
+    try:
+        if arduino and arduino.is_open:
+            arduino.close()
+    except:
+        pass
+    try:
+        arduino = serial.Serial(port, 9600)
+        time.sleep(2)  # Allow time for Arduino reset
+        print("Successfully reconnected to Arduino")
+    except Exception as e:
+        print(f"Arduino reconnection failed: {e}")
+
+reconnect_arduino()  # Initial connection
+
+# Thread-safe serial writing with error recovery
+def safe_serial_write(command):
+    global arduino
+    try:
+        with serial_lock:
+            if not arduino or not arduino.is_open:
+                reconnect_arduino()
+            arduino.write(command)
+            arduino.flush()  # Force immediate send
+            print(f"Sent command: {command.decode().strip()}")
+    except Exception as e:
+        print(f"Serial write error: {e}")
+        reconnect_arduino()
+
+# Firebase command handler
 def handle_command(event):
-    print("hello")
     data = event.data
-    command = None
     if data == "WATER":
         print("Triggering water motor")
-        command = b'WATER\n'
-    elif data == "FOOD": 
+        safe_serial_write(b'WATER\n')
+    elif data == "FOOD":
         print("Triggering food motor")
-        command = b'FOOD\n'
+        safe_serial_write(b'FOOD\n')
     elif data == "POTTY":
         print("Triggering potty motor")
-        command = b'POTTY\n'
+        safe_serial_write(b'POTTY\n')
     else:
-        print("Set to command to default")
+        print("Unknown command")
 
-    if command:
-        with serial_lock:  # Acquire lock before writing
-            arduino.write(command)
-    
     db.reference("users/default/commands/motor_command").set("")
 
+# Scheduling logic
 def format_current_time():
     now = datetime.datetime.now()
     hour = now.hour
     minute = now.minute
-    isAM = True
-    if hour >= 12:
-        if hour > 12:
-            hour -= 12
-        isAM = False
-    if hour == 0:
-        hour = 12
-    return f"{str(hour).zfill(2)}:{str(minute).zfill(2)}:{'AM' if isAM else 'PM'}"
+    is_am = hour < 12
+    display_hour = hour if 1 <= hour <= 12 else abs(hour - 12)
+    return f"{display_hour:02d}:{minute:02d}:{'AM' if is_am else 'PM'}"
 
 def check_schedule_and_trigger(last_triggered):
-    schedule_ref = db.reference("users/default/scheduling")
-    data = schedule_ref.get() or {}
-    food_times = data.get("foodRefillTimes", [])
-    water_times = data.get("waterRefillTimes", [])
-    potty_times = data.get("pottyRefillTimes", [])
+    ref = db.reference("users/default/scheduling")
+    schedule = ref.get() or {}
+    
+    current_time = format_current_time()
+    print(f"Scheduler check at {current_time}")
 
-    current_time_str = format_current_time()
-    print("Current time: ", current_time_str)
-
-    # Use the lock for all scheduled triggers
-    with serial_lock:  # Acquire lock once for all checks
-        if current_time_str in food_times and last_triggered.get("food") != current_time_str:
-            print("Activating food motor")
-            arduino.write(b'FOOD\n')
-            last_triggered["food"] = current_time_str
-
-        if current_time_str in water_times and last_triggered.get("water") != current_time_str:
-            print("Activating water motor")
-            arduino.write(b'WATER\n')
-            last_triggered["water"] = current_time_str
-
-        if current_time_str in potty_times and last_triggered.get("potty") != current_time_str:
-            print("Activating potty motors")
-            arduino.write(b'POTTY\n')
-            last_triggered["potty"] = current_time_str
+    with serial_lock:
+        for task in ["food", "water", "potty"]:
+            times = schedule.get(f"{task}RefillTimes", [])
+            if current_time in times and last_triggered.get(task) != current_time:
+                print(f"Activating {task} motor")
+                safe_serial_write(f"{task.upper()}\n".encode())
+                last_triggered[task] = current_time
 
     return last_triggered
 
+# Main execution
 last_triggered = {}
-
-print("Checking Database")
+print("Initializing Firebase listener...")
 command_ref = db.reference("users/default/commands/motor_command")
 command_ref.listen(handle_command)
-print("Database Checked")
 
+print("Starting scheduler loop")
 while True:
-    last_triggered = check_schedule_and_trigger(last_triggered)
-    time.sleep(30)
+    try:
+        last_triggered = check_schedule_and_trigger(last_triggered)
+        time.sleep(30)
+    except KeyboardInterrupt:
+        print("Exiting...")
+        break
+    except Exception as e:
+        print(f"Critical error in scheduler: {e}")
