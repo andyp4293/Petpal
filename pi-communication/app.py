@@ -18,7 +18,7 @@ async def find_arduino_ports():
     if not ports:
         print("No port found")
         sys.exit(1)
-    return ports[0]
+    return ports  # Returning the list of ports
 
 # Async function to handle the command
 async def handle_command(event):
@@ -88,10 +88,14 @@ async def check_schedule_and_trigger(last_triggered):
 
 # Async function to initialize the Arduino connection
 async def init_arduino():
-    port = await find_arduino_ports()
+    ports = await find_arduino_ports()
+    if not ports:
+        print("No Arduino ports found")
+        sys.exit(1)  # Exit if no ports are found
+    port = ports[0]  # Ensure it's a string, i.e., first port in the list
     global arduino
-    arduino = await serial_asyncio.create_serial_connection(None, port, 9600)
-    print("Arduino connected")
+    arduino = await serial_asyncio.create_serial_connection(None, port, baudrate=9600)
+    print(f"Arduino connected on {port}")
 
 # Async function to run the listener and scheduling checks
 async def run():
