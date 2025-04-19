@@ -5,6 +5,7 @@ import {
   FlatList,
   StyleSheet,
   ScrollView,
+  TouchableOpacity
 } from "react-native";
 import LiveCameraFeed from "../components/LiveCameraFeed";
 import Joystick from "../components/Joystick";
@@ -37,14 +38,16 @@ const ListItem = ({ type, details, message }: LogItemProps) => (
 export default function TabMobileScreen(): JSX.Element {
   const isFocused = useIsFocused();
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [isRunning, setIsRunning] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>("Robot not connected");
 
   // const ipAddress = "192.168.4.1"; // use this for when we connect directly to robot
   const ipAddress = "192.168.137.213" // use this for when we use the hotspot
 
-
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const addonSocketRef = useRef<WebSocket | null>(null);
 
   const socketUrl = `ws://${ipAddress}:100/ws`; // adjust as needed
 
@@ -82,6 +85,42 @@ export default function TabMobileScreen(): JSX.Element {
     };
   }, [socketUrl]);
 
+  // establish websocket on mount
+  useEffect(() => {
+    addonSocketRef.current = new WebSocket("ws://192.168.137.59:81");
+
+    addonSocketRef.current.onopen = () => {
+      console.log("WebSocket for (bubbles and food) connected");
+    }
+    addonSocketRef.current.onmessage = (event) => {
+      console.log("Bubbles and Food Received from ESP: ", event.data);
+    }
+    addonSocketRef.current.onerror = (error) => {
+      console.log("Bubbles and Food WebSocket error: ", error);
+    }
+    addonSocketRef.current.onclose = () => {
+      console.log("Bubbles and Food WebSocket closed");
+    }
+
+    return () => {
+      addonSocketRef.current?.close();
+    }
+  }, [])
+
+  // helper function for commmand handling with bubble and food dispenser
+  const sendCommand = (command: number, value: number) => {
+    if (addonSocketRef.current?.readyState === WebSocket.OPEN) {
+      console.log("Hello I am sending!!!");
+      addonSocketRef.current.send(JSON.stringify({
+        N: command,
+        D1: value
+      }));
+    }
+    else {
+      console.log("Not connected - can not send commands");
+    }
+  };
+
   useEffect(() => {
     connectWebSocket();
     return () => {
@@ -106,8 +145,6 @@ export default function TabMobileScreen(): JSX.Element {
 
   return (
     <ScrollView style={styles.container} scrollEnabled={scrollEnabled}>
-
-
       <View style={styles.headerRow}>
         <Text style={styles.sectionTitle}>Live Camera Feed</Text>
         <Text
@@ -162,6 +199,27 @@ export default function TabMobileScreen(): JSX.Element {
         }}
       />
 
+      <View style={styles.controlContainer}>
+        <Text style={styles.sectionTitle}>Controls</Text>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.button, isRunning && styles.activeButton]}
+            onPress={() => {
+              const newState = !isRunning;
+              setIsRunning(newState);
+              sendCommand(100, newState ? 1 : 0);
+            }}
+          >
+            <Text style={styles.buttonText}>{isRunning ? "Bubbles" : "Bubbles"}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => sendCommand(101, 0)}
+          >
+            <Text style={styles.buttonText}>Treat</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       {/* Recent Logs */}
       <View style={styles.logsContainer}>
         <Text style={styles.sectionTitle}>Recent Updates</Text>
@@ -189,6 +247,28 @@ export default function TabMobileScreen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
+  buttonRow: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    justifyContent: 'space-between'
+  },
+  button: {
+    backgroundColor: "#1e3504",
+    padding: 20,
+    borderRadius: 5,
+    width: "auto",
+    alignItems: "center",
+  },
+  buttonText: {
+    fontWeight: "bold",
+    color: "#fff"
+  },
+  controlContainer: {
+    marginBottom: 20
+  },
+  activeButton: {
+    backgroundColor: '#28a745',
+  },
   container: {
     flex: 1,
     backgroundColor: "#ede8d0",
