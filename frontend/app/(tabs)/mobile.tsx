@@ -42,14 +42,15 @@ export default function TabMobileScreen(): JSX.Element {
   const [connectionStatus, setConnectionStatus] = useState<string>("Robot not connected");
 
   // const ipAddress = "192.168.4.1"; // use this for when we connect directly to robot
-  const ipAddress = "192.168.137.213" // use this for when we use the hotspot
+  const ipAddress_ESP_Camera = "192.168.137.213" // use this for when we use the hotspot for the camera esp
+  const ipAddress_ESP_8266 = "192.168.137.213" // use this for when we use the hotspot for the esp 8266
 
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const addonSocketRef = useRef<WebSocket | null>(null);
 
-  const socketUrl = `ws://${ipAddress}:100/ws`; // adjust as needed
+  const socketUrl = `ws://${ipAddress_ESP_Camera}:100/ws`; // adjust as needed
 
   // Function to create a new WebSocket connection.
   const connectWebSocket = useCallback(() => {
@@ -87,7 +88,7 @@ export default function TabMobileScreen(): JSX.Element {
 
   // establish websocket on mount
   useEffect(() => {
-    addonSocketRef.current = new WebSocket("ws://192.168.137.59:81");
+    addonSocketRef.current = new WebSocket(`ws://${ipAddress_ESP_8266}:81`);
 
     addonSocketRef.current.onopen = () => {
       console.log("WebSocket for (bubbles and food) connected");
@@ -165,7 +166,7 @@ export default function TabMobileScreen(): JSX.Element {
 
       </View>
       <View style={styles.statusGrid}>
-        {isFocused && <LiveCameraFeed uri= {`http://${ipAddress}:81/stream`} />}
+        {isFocused && <LiveCameraFeed uri= {`http://${ipAddress_ESP_Camera}:81/stream`} />}
       </View>
 
       <Joystick
