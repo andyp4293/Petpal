@@ -297,7 +297,7 @@ export default function TabStationaryScreen(): JSX.Element {
       {/* Pet Status Overview */}
       <Text style={styles.sectionTitle}>PetPal Station Statuses</Text>
 
-      <StatusCardComponent water_level = {water_level} food_level = {food_level} potty_level = {potty_level} showReset = {true}/>
+      <StatusCardComponent water_level = {water_level} food_level = {food_level} potty_level = {potty_level} showReset = {true} onReset = {() => {setFood_counter(6); setWater_counter(3); setPotty_counter(5)}}/>
 
         {/* Refill Water and Food */}
       <View style={styles.refillButtonsContainer}>

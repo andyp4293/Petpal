@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {
   View,
   Text,
@@ -9,13 +9,23 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { ref, get, update} from "firebase/database"
 import { db } from "../../firebaseConfig"
 
+type PetStatusType = "potty" | "water" | "food";
 type StatusCardProps = {
     title: string;
     value: number | string;
     icon: string;
+    showReset: boolean;
+    type: PetStatusType; 
+    onReset?: () => void;
   };
+  const resetLabels: Record<PetStatusType, string> = {
+    potty: "Potty Replaced",
+    water: "Water Container Refilled",
+    food: "Food Container Refilled",
+  };
+  
 
-const StatusCard = ({ title, value, icon }: StatusCardProps) => {
+const StatusCard = ({ title, value, icon, showReset, type, onReset }: StatusCardProps) => {
     const [cardWidth, setCardWidth] = useState(0); 
   
   
@@ -33,6 +43,13 @@ const StatusCard = ({ title, value, icon }: StatusCardProps) => {
           <View style={[styles.progressBar, { width: progressBarWidth }]} />
         </View>
         <Text style={styles.cardValue}>{`${numericValue}%`}</Text>
+        {showReset && (
+          <View style={styles.resetButtonContainer}>
+            <TouchableOpacity style={styles.button} onPress={onReset}>
+              <Text style={styles.buttonText}>{resetLabels[type]}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };
@@ -53,78 +70,24 @@ const StatusCard = ({ title, value, icon }: StatusCardProps) => {
     water_level: string;
     food_level: string;
     potty_level: string;
-    showReset: boolean
+    showReset: boolean; 
+    onReset: () => void;
   }
 
 
 export default function StatusCardComponent(props: StatusCardComponentProps): JSX.Element {
-    const { water_level, food_level, potty_level, showReset } = props;
-    const [water_counter, setWater_counter] = useState<number>(NaN);
-    const [food_counter, setFood_counter] = useState<number>(NaN);
-    const [potty_counter, setPotty_counter] = useState<number>(NaN); 
-
-     useEffect(() => {
-    
-              const fetchPetStatuses = async () => {
-                try {
-                  const userRef = ref(db, 'users/default/PetStatus');
-                  const snapshot = await get(userRef)
-          
-                  if(snapshot.exists()){
-                    const data = snapshot.val();
-                    
-
-                    if(typeof data === "object" && data.water_counter ){
-                      setWater_counter(data.water_counter);
-                    }
-                    else{
-                      setWater_counter(NaN);
-                    }
-
-                    if(typeof data === "object" && data.food_counter ){
-                      setFood_counter(data.food_counter);
-                    }
-                    else{
-                      setFood_counter(NaN);
-                    }
-
-                    if(typeof data === "object" && data.potty_counter ){
-                      setPotty_counter(data.potty_counter);
-                    }
-                    else{
-                      setPotty_counter(NaN);
-                    }
-                  }
-                }
-                catch(error){
-                  console.error(error)
-                }
-              };
-    
-
-              fetchPetStatuses();
-            }, []);
+    const { water_level, food_level, potty_level, showReset, onReset } = props;
 
     return (
         <View style={styles.statusGrid}>
-              <StatusCard title="Potty Capacity" value={`${potty_level}%`} icon="toilet" />
-              {showReset && (
-              <TouchableOpacity style={styles.button} onPress={() => resetCount("potty", 5)}>
-                <Text style={styles.buttonText}>Potty Material Replaced</Text>
-              </TouchableOpacity>)}
+              <StatusCard title="Potty Capacity" value={`${potty_level}%`} icon="toilet" type = "potty" showReset = {showReset} onReset = {() => {resetCount("potty", 5); onReset()}} />
 
 
-              <StatusCard title="Water Level" value={`${water_level}%`} icon="tint" />
-              <StatusCard title="Food Level" value={`${food_level}%`} icon="pizza-slice" />
-              {showReset && (
-                <TouchableOpacity style={styles.button} onPress={() => resetCount("water", 3)}>
-                <Text style={styles.buttonText}>Water Container Refilled</Text>
-              </TouchableOpacity>)}
+              <StatusCard title="Water Level" value={`${water_level}%`} icon="tint" type = "water" showReset = {showReset} onReset = {() => {resetCount("water", 3); onReset()}}/>
+              <StatusCard title="Food Level" value={`${food_level}%`} icon="pizza-slice" type = "food" showReset = {showReset} onReset = {() => {resetCount("food", 6); onReset()}}/>
 
               
-              {showReset && (<TouchableOpacity style={styles.button} onPress={() => resetCount("food", 6)}>
-                <Text style={styles.buttonText}>Food Container Refilled</Text>
-              </TouchableOpacity>)}
+
 
             
         </View>
@@ -139,6 +102,7 @@ export default function StatusCardComponent(props: StatusCardComponentProps): JS
     statusGrid: {
         marginBottom: 20,
         width: "100%",
+        justifyContent: "flex-end",
       },
     progressBarContainer: {
         width: "100%",
@@ -179,15 +143,22 @@ export default function StatusCardComponent(props: StatusCardComponentProps): JS
       },
       button: {
         backgroundColor: "#1e3504",
-        padding: 20,
+        padding: 10,
         borderRadius: 5,
-        width: "10%",
+        width: "30%",
         alignItems: "center",
         justifyContent: "flex-end",
       },
       buttonText: {
         color: "#fff",
         fontWeight: "bold",
+        fontSize: 9, 
+        textAlign: "center"
+      },
+      resetButtonContainer: {
+        width: "100%",
+        alignItems: "flex-end",
+        justifyContent: "center",
       },
 
   });
