@@ -58,12 +58,12 @@ export default function TabStationaryScreen(): JSX.Element {
   const [showFoodTimePicker, setShowFoodTimePicker] = useState<boolean>(false);
   const [showWaterTimePicker, setShowWaterTimePicker] = useState<boolean>(false);
   const [showPottyTimePicker, setShowPottyTimePicker] = useState<boolean>(false);
-  const [waterRefillTimes, setWater_counterRefillTimes] = useState<string[]>([]);
-  const [foodRefillTimes, setFood_counterRefillTimes] = useState<string[]>([]);
-  const [pottyRefillTimes, setPotty_counterRefillTimes] = useState<string[]>([]);
+  const [waterRefillTimes, setWaterRefillTimes] = useState<string[]>([]);
+  const [foodRefillTimes, setFoodRefillTimes] = useState<string[]>([]);
+  const [pottyRefillTimes, setPottyRefillTimes] = useState<string[]>([]);
 
   
-  const [isInitialLoad] = useState<boolean>(true);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
   const triggerMotor = async (type: "water" | "food" | "potty", counter: number) => {
     await set(ref(db, "users/default/commands"), {
@@ -111,27 +111,27 @@ export default function TabStationaryScreen(): JSX.Element {
 
   const handleAddFoodTime = (pickedDuration: {hours?: number; minutes?: number}) => {
     const formattedTime = formatTime(pickedDuration);
-    setFood_counterRefillTimes(prevTimes => [...prevTimes, formattedTime]);
+    setFoodRefillTimes(prevTimes => [...prevTimes, formattedTime]);
   }
 
   const handleAddWaterTime = (pickedDuration: {hours?: number; minutes?: number}) => {
     const formattedTime = formatTime(pickedDuration);
-    setWater_counterRefillTimes(prevTimes => [...prevTimes, formattedTime]);
+    setWaterRefillTimes(prevTimes => [...prevTimes, formattedTime]);
   }
 
   const handleAddPottyTime = (pickedDuration: {hours?: number; minutes?: number}) => {
     const formattedTime = formatTime(pickedDuration);
-    setPotty_counterRefillTimes(prevTimes => [...prevTimes, formattedTime]);
+    setPottyRefillTimes(prevTimes => [...prevTimes, formattedTime]);
   }
 
   const handleRemoveFoodTime = (index: number) => {
-    setFood_counterRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
+    setFoodRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
   }
   const handleRemoveWaterTime = (index: number) => {
-    setWater_counterRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
+    setWaterRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
   }
   const handleRemovePottyTime = (index: number) => {
-    setPotty_counterRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
+    setPottyRefillTimes(prevTimes => prevTimes.filter((_, i) => i !== index));
   }
 
   const formatTime = ({
@@ -167,26 +167,26 @@ export default function TabStationaryScreen(): JSX.Element {
     </View>
   );
 
-   useEffect(() => {
-    const sendSchedulingToDatabase = async () => {
-      const scheduleRef = ref(db, "users/default/scheduling");
-      const schedulingData = {
-        toggleScheduling,
-        foodRefillTimes,
-        waterRefillTimes,
-        pottyRefillTimes,
-      };
-      try {
-        await set(scheduleRef, schedulingData);
-        console.log("Scheduling data sent!", schedulingData);
-      } catch (error) {
-        console.log("Error sending scheduling data", error);
-      }
+  useEffect(() => {
+  const sendSchedulingToDatabase = async () => {
+    const scheduleRef = ref(db, "users/default/scheduling");
+    const schedulingData = {
+      toggleScheduling,
+      foodRefillTimes,
+      waterRefillTimes,
+      pottyRefillTimes,
     };
-    if(!isInitialLoad){
-      sendSchedulingToDatabase();
+    try {
+      await set(scheduleRef, schedulingData);
+      console.log("Scheduling data sent!", schedulingData);
+    } catch (error) {
+      console.log("Error sending scheduling data", error);
     }
-  }, [foodRefillTimes, waterRefillTimes, pottyRefillTimes, isInitialLoad, toggleScheduling]);
+  };
+  if(!isInitialLoad){
+    sendSchedulingToDatabase();
+  }
+}, [foodRefillTimes, waterRefillTimes, pottyRefillTimes, isInitialLoad, toggleScheduling]);
 
   useEffect(() => {
           const scheduleRef = ref(db, "users/default/scheduling");
@@ -274,9 +274,9 @@ export default function TabStationaryScreen(): JSX.Element {
               if(snapshot.exists()){
                 const data = snapshot.val();
                 setToggleScheduling(data.toggleScheduling)
-                setFood_counterRefillTimes(data.foodRefillTimes || [])
-                setWater_counterRefillTimes(data.waterRefillTimes || []);
-                setPotty_counterRefillTimes(data.pottyRefillTimes || []);
+                setFoodRefillTimes(data.foodRefillTimes || [])
+                setWaterRefillTimes(data.waterRefillTimes || []);
+                setPottyRefillTimes(data.pottyRefillTimes || []);
                 console.log("Retrieved data:", data);
               } else {
                 console.log("No data found");
@@ -284,6 +284,7 @@ export default function TabStationaryScreen(): JSX.Element {
             } catch(error) {
               console.log("Error:", error);
             }
+            setIsInitialLoad(false);
           }
 
           fetchPetStatuses();
