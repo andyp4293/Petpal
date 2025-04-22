@@ -313,16 +313,6 @@ export default function TabStationaryScreen(): JSX.Element {
         </TouchableOpacity>
       </View>
 
-      {/* Recent Logs */}
-      <View style={styles.logsContainer}>
-        <Text style={styles.sectionTitle}>Recent Updates</Text>
-        <FlatList
-          data={recentLogs}
-          renderItem={renderLogItem}
-          keyExtractor={(item) => item.id}
-          scrollEnabled={false}
-        />
-      </View>
       <View style={styles.schedulingContainer}>
         <View style={styles.schedulingHeader}>
           <Text style={styles.sectionTitle}>Scheduling</Text>

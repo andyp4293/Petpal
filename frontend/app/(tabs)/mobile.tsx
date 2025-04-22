@@ -44,8 +44,8 @@ export default function TabMobileScreen(): JSX.Element {
 
 
   // const ipAddress = "192.168.4.1"; // use this for when we connect directly to robot
-  const ipAddress_ESP_Camera = "192.168.137.213" // use this for when we use the hotspot for the camera esp
-  const ipAddress_ESP_8266 = "192.168.137.213" // use this for when we use the hotspot for the esp 8266
+  const ipAddress_ESP_Camera = "192.168.137.65" // use this for when we use the hotspot for the camera esp
+  const ipAddress_ESP_8266 = "192.168.137.85" // use this for when we use the hotspot for the esp 8266
 
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -231,7 +231,7 @@ export default function TabMobileScreen(): JSX.Element {
 
                 if (newState) {
                   // Turn on obstacle avoidance
-                  socketRef.current.send(JSON.stringify({ N: 107 }));
+                  socketRef.current.send(JSON.stringify({ "N": 101, "D1": 2 }));
                   console.log("Obstacle avoidance activated");
                 } else {
                   // Return to manual mode (stop first)
@@ -254,16 +254,7 @@ export default function TabMobileScreen(): JSX.Element {
       </View>
 
 
-      {/* Notifications */}
-      <View style={styles.notificationsContainer}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
-        <FlatList
-          data={notifications}
-          renderItem={({ item }) => <ListItem {...item} />}
-          keyExtractor={(item) => item.id}
-          scrollEnabled={false}
-        />
-      </View>
+    
 
     </ScrollView>
   );
