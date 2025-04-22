@@ -166,14 +166,6 @@ export default function TabSettingsScreen(): JSX.Element {
         <SettingItem label="Pet's Name" value={petName} route="pet-name" />
         <SettingItem label="Email" value={email} route="email" />
       </View>
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Maintenance Settings</Text>
-
-        {/* settings for refill/replacement on the mobile and stationary robots */}
-        <SettingItem label="Refill Water" value={`${refillWater}%`} route="refillWater" />
-        <SettingItem label="Replace Potty" value={`${replacePotty}%`}route="replacePotty" />
-        <SettingItem label="Refill Food" value={`${refillFood}%`} route="refillFood" />
-      </View>
     </ScrollView>
   );
 }
