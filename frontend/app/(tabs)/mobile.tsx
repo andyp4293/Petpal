@@ -40,6 +40,8 @@ export default function TabMobileScreen(): JSX.Element {
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>("Robot not connected");
+  const [isAvoiding, setIsAvoiding] = useState(false);
+
 
   // const ipAddress = "192.168.4.1"; // use this for when we connect directly to robot
   const ipAddress_ESP_Camera = "192.168.137.213" // use this for when we use the hotspot for the camera esp
@@ -172,6 +174,7 @@ export default function TabMobileScreen(): JSX.Element {
       <Joystick
         onStart={() => setScrollEnabled(false)}
         onMove={(direction, speed) => {
+          if (isAvoiding) return; // Ignore joystick input if in obstacle avoidance mode
           if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
             // Send a movement command in the expected format.
             const command = JSON.stringify({
@@ -219,18 +222,37 @@ export default function TabMobileScreen(): JSX.Element {
           >
             <Text style={styles.buttonText}>Treat</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, isAvoiding && styles.activeButton]}
+            onPress={() => {
+              if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+                const newState = !isAvoiding;
+                setIsAvoiding(newState);
+
+                if (newState) {
+                  // Turn on obstacle avoidance
+                  socketRef.current.send(JSON.stringify({ N: 107 }));
+                  console.log("Obstacle avoidance activated");
+                } else {
+                  // Return to manual mode (stop first)
+                  socketRef.current.send(JSON.stringify({
+                    N: 102,
+                    D1: 9,
+                    D2: 0
+                  }));
+                  console.log("Obstacle avoidance deactivated");
+                }
+              } else {
+                console.warn("WebSocket not connected");
+              }
+            }}
+          >
+            <Text style={styles.buttonText}>{isAvoiding ? "Stop Avoiding" : "Avoid Obstacles"}</Text>
+          </TouchableOpacity>
+
         </View>
       </View>
-      {/* Recent Logs */}
-      <View style={styles.logsContainer}>
-        <Text style={styles.sectionTitle}>Recent Updates</Text>
-        <FlatList
-          data={recentLogs}
-          renderItem={({ item }) => <ListItem {...item} />}
-          keyExtractor={(item) => item.id}
-          scrollEnabled={false}
-        />
-      </View>
+
 
       {/* Notifications */}
       <View style={styles.notificationsContainer}>
