@@ -44,8 +44,8 @@ export default function TabMobileScreen(): JSX.Element {
 
 
   // const ipAddress = "192.168.4.1"; // use this for when we connect directly to robot
-  const ipAddress_ESP_Camera = "192.168.137.65" // use this for when we use the hotspot for the camera esp
-  const ipAddress_ESP_8266 = "192.168.137.85" // use this for when we use the hotspot for the esp 8266
+  const ipAddress_ESP_Camera = "192.168.137.206" // use this for when we use the hotspot for the camera esp
+  const ipAddress_ESP_8266 = "192.168.137.185" // use this for when we use the hotspot for the esp 8266
 
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
