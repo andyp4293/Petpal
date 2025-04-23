@@ -137,17 +137,8 @@ export default function TabHomeScreen(): JSX.Element {
     <ScrollView style={styles.container}>
       {/* Pet Status Overview */}
       <Text style={styles.sectionTitle}>PetPal Overview</Text>
-      <View style={styles.statusGrid}>
-              <StatusCardComponent water_level = {water_level} food_level = {food_level} potty_level = {potty_level} showReset = {false} />
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Last Exercise</Text>
-            <FontAwesome5 name="dumbbell" size={18} color="#1e3504" />
-          </View>
-          <Text style={styles.timeValue}>{petStatus.timeLastPlay}</Text>
-          <Text style={styles.timeLabel}>Time since last activity</Text>
-        </View>
-      </View>
+      <StatusCardComponent water_level = {water_level} food_level = {food_level} potty_level = {potty_level} showReset = {false} />
+
 
       {/* Recent Logs */}
       <View style={styles.logsContainer}>
