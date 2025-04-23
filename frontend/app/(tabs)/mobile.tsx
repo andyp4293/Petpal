@@ -28,12 +28,7 @@ type LogItemProps = {
   message?: string;
 };
 
-const ListItem = ({ type, details, message }: LogItemProps) => (
-  <View style={styles.listItem}>
-    <Text style={styles.itemType}>{type}</Text>
-    <Text style={styles.itemText}>{details || message}</Text>
-  </View>
-);
+
 
 export default function TabMobileScreen(): JSX.Element {
   const isFocused = useIsFocused();
@@ -41,6 +36,7 @@ export default function TabMobileScreen(): JSX.Element {
   const [isRunning, setIsRunning] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>("Robot not connected");
   const [isAvoiding, setIsAvoiding] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
 
 
   // const ipAddress = "192.168.4.1"; // use this for when we connect directly to robot
@@ -222,8 +218,10 @@ export default function TabMobileScreen(): JSX.Element {
           >
             <Text style={styles.buttonText}>Treat</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, isAvoiding && styles.activeButton]}
+
+        </View>
+        <TouchableOpacity
+            style={[styles.ModeButton, isAvoiding && styles.activeButton]}
             onPress={() => {
               if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
                 const newState = !isAvoiding;
@@ -249,8 +247,33 @@ export default function TabMobileScreen(): JSX.Element {
           >
             <Text style={styles.buttonText}>{isAvoiding ? "Stop Avoiding" : "Avoid Obstacles"}</Text>
           </TouchableOpacity>
+        <TouchableOpacity
+            style={[styles.button, isFollowing && styles.activeButton]}
+            onPress={() => {
+              if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+                const newState = !isFollowing;
+                setIsFollowing(newState);
 
-        </View>
+                if (newState) {
+                  // Turn on follow mode
+                  socketRef.current.send(JSON.stringify({ "N": 101, "D1": 3 }));
+                  console.log("Follow mode activated");
+                } else {
+                  // Return to manual mode (stop first)
+                  socketRef.current.send(JSON.stringify({
+                    N: 102,
+                    D1: 9,
+                    D2: 0
+                  }));
+                  console.log("Follow mode deactivated");
+                }
+              } else {
+                console.warn("WebSocket not connected");
+              }
+            }}
+          >
+            <Text style={styles.buttonText}>{isFollowing ? "Stop Following" : "Follow Mode"}</Text>
+          </TouchableOpacity>
       </View>
 
 
@@ -272,6 +295,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: "auto",
     alignItems: "center",
+  },
+  ModeButton: {
+    backgroundColor: "#1e3504",
+    padding: 20,
+    borderRadius: 5,
+    width: "auto",
+    alignItems: "center",
+    marginBottom: 20, 
   },
   buttonText: {
     fontWeight: "bold",

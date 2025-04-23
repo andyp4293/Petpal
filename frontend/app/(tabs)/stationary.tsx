@@ -98,6 +98,9 @@ export default function TabStationaryScreen(): JSX.Element {
           await update(ref(db, "users/default/PetStatus"), {
             [`${type}_level`]: roundedValue.toString(), // Ensure it's a string
           });
+          await update(ref(db, "users/default/PetStatus"), {
+            [`${type}_level`]: roundedValue.toString(), // Ensure it's a string
+          });
         }
   
       
@@ -159,13 +162,6 @@ export default function TabStationaryScreen(): JSX.Element {
     else timeParts.push("PM");
     return timeParts.join(":");
   };
-
-  const renderLogItem = ({ item }: { item: any }) => (
-    <View style={styles.logItem}>
-      <Text style={styles.logType}>{item.type}</Text>
-      <Text style={styles.logDetails}>{item.details}</Text>
-    </View>
-  );
 
   useEffect(() => {
   const sendSchedulingToDatabase = async () => {
