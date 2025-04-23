@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   ScrollView,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons"; 
-import { ref, get } from "firebase/database"
+import { ref, get, onValue } from "firebase/database"
 import { db } from "../../firebaseConfig"
 import StatusCardComponent from "../components/StatusCardComponent";
 
@@ -73,57 +73,72 @@ export default function TabHomeScreen(): JSX.Element {
     const [water_level, setWater] = useState<string>("");
     const [food_level, setFood] = useState<string>(""); 
     const [potty_level, setPotty] = useState<string>(""); 
+    const [notifications, setNotifications] = useState<
+    Array<{ id: string; type: string; message: string }>>([]);
   
+    
+
+
       useEffect(() => {
-        const fetchPetStatuses = async () => {
-          try {
-            const userRef = ref(db, 'users/default/PetStatus');
-            const snapshot = await get(userRef)
-    
-            if(snapshot.exists()){
-              const data = snapshot.val();
-              console.log(data);
-              
-              if(typeof data === "object" && data.water_level ){
-                setWater(String(data.water_level));
-              }
-              else{
-                setWater("N/A");
-              }
+        const newNotifications = [];
+      
+        // Potty level check
+        const pottyLevel = parseFloat(potty_level);
+        if (!isNaN(pottyLevel) && pottyLevel <= 20) {
+          newNotifications.push({
+            id: 'potty-low',
+            type: 'Potty',
+            message: `Potty level is low (${pottyLevel}%). Replace soon!`,
+          });
+        }
+      
+        // Food level check
+        const foodLevel = parseFloat(food_level);
+        if (!isNaN(foodLevel) && foodLevel <= 34) {
+          newNotifications.push({
+            id: 'food-low',
+            type: 'Food',
+            message: `Food level is low (${foodLevel}%). Refill soon!`,
+          });
+        }
+      
+        // Water level check
+        const waterLevel = parseFloat(water_level);
+        if (!isNaN(waterLevel) && waterLevel <= 34) {
+          newNotifications.push({
+            id: 'water-low',
+            type: 'Water',
+            message: `Water level is low (${waterLevel}%). Refill soon!`,
+          });
+        }
+      
+        setNotifications(newNotifications);
+      }, [water_level, food_level, potty_level]);
 
-              if(typeof data === "object" && data.food_level ){
-                setFood(String(data.food_level));
-              }
-              else{
-                setFood("N/A");
-              }
-
-              if(typeof data === "object" && data.potty_level ){
-                setPotty(String(data.potty_level));
-              }
-              else{
-                setPotty("N/A");
-              }
-            }
-            else{
-              console.log('No data found');
-            }
+      useEffect(() => {
+        const userRef = ref(db, 'users/default/PetStatus');
+        const unsubscribe = onValue(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            console.log("Real-time update:", data);
+            
+            // Update all states directly from snapshot
+            setWater(data.water_level?.toString() || "N/A");
+            setFood(data.food_level?.toString() || "N/A");
+            setPotty(data.potty_level?.toString() || "N/A");
           }
-          catch(error){
-            console.error(error)
-          }
-        };
+        });
     
-        fetchPetStatuses();
-      }, []);
-
+        // Cleanup function
+        return () => unsubscribe();
+      }, []); 
 
   return (
     <ScrollView style={styles.container}>
       {/* Pet Status Overview */}
       <Text style={styles.sectionTitle}>PetPal Overview</Text>
       <View style={styles.statusGrid}>
-              <StatusCardComponent water_level = {water_level} food_level = {food_level} potty_level = {potty_level} showReset = {false}/>
+              <StatusCardComponent water_level = {water_level} food_level = {food_level} potty_level = {potty_level} showReset = {false} />
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Last Exercise</Text>
